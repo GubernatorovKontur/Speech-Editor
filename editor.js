@@ -15,12 +15,17 @@ const addStageBtn = document.getElementById("add-stage-btn");
 const saveJsonBtn = document.getElementById("save-json-btn");
 const loadJsonBtn = document.getElementById("load-json-btn");
 const jsonFileInput = document.getElementById("json-file");
+const toggleJsonBtn = document.getElementById("toggle-json-btn");
+const jsonPanel = document.getElementById("json-panel");
+const jsonEditor = document.getElementById("json-editor");
+const applyJsonBtn = document.getElementById("apply-json-btn");
 const diagram = document.getElementById("diagram");
 const editStageModal = document.getElementById("edit-stage-modal");
 const editStageId = document.getElementById("edit-stage-id");
 const editStageText = document.getElementById("edit-stage-text");
 const editStageOptions = document.getElementById("edit-stage-options");
 const addOptionBtn = document.getElementById("add-option-btn");
+const deleteStageBtn = document.getElementById("delete-stage-btn");
 const saveStageBtn = document.getElementById("save-stage-btn");
 const cancelStageBtn = document.getElementById("cancel-stage-btn");
 
@@ -37,13 +42,14 @@ function init() {
         disableEditor();
     }
 
-    // Загружаем сохранённые сценарии, если есть
+    // Загружаем сохранённые сценарии
     const savedScenarios = localStorage.getItem("scenarios");
     if (savedScenarios) {
         state.scenarios = JSON.parse(savedScenarios);
     }
 
     renderDiagram();
+    updateJsonEditor();
 }
 
 // Активация/деактивация редактора
@@ -51,6 +57,7 @@ function enableEditor() {
     addStageBtn.disabled = false;
     saveJsonBtn.disabled = false;
     loadJsonBtn.disabled = false;
+    toggleJsonBtn.disabled = false;
     document.querySelector(".editor-panel").style.opacity = "1";
 }
 
@@ -58,6 +65,7 @@ function disableEditor() {
     addStageBtn.disabled = true;
     saveJsonBtn.disabled = true;
     loadJsonBtn.disabled = true;
+    toggleJsonBtn.disabled = true;
     document.querySelector(".editor-panel").style.opacity = "0.5";
 }
 
@@ -105,7 +113,7 @@ function renderDiagram() {
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svg.setAttribute("class", "arrow");
                 svg.innerHTML = `
-                    <line x1="50%" y1="100%" x2="50%" y2="0%" stroke="#00CCAE" stroke-width="2"/>
+                    <line x1="50%" y1="100%" x2="50%" y2="0%" stroke="#1A3C5E" stroke-width="2"/>
                     <text x="50%" y="50%" fill="#555" font-size="12" text-anchor="middle">${option.text}</text>
                 `;
                 diagram.appendChild(svg);
@@ -113,6 +121,35 @@ function renderDiagram() {
         });
     });
 }
+
+// Обновление JSON-редактора
+function updateJsonEditor() {
+    jsonEditor.value = JSON.stringify(state.scenarios, null, 2);
+}
+
+// Показ/скрытие JSON
+toggleJsonBtn.addEventListener("click", () => {
+    if (jsonPanel.style.display === "none") {
+        jsonPanel.style.display = "block";
+        toggleJsonBtn.innerHTML = '<span class="material-icons">code</span> Скрыть JSON';
+        updateJsonEditor();
+    } else {
+        jsonPanel.style.display = "none";
+        toggleJsonBtn.innerHTML = '<span class="material-icons">code</span> Показать JSON';
+    }
+});
+
+// Применение изменений JSON
+applyJsonBtn.addEventListener("click", () => {
+    try {
+        const newScenarios = JSON.parse(jsonEditor.value);
+        state.scenarios = newScenarios;
+        localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
+        renderDiagram();
+    } catch (error) {
+        alert("Ошибка в JSON: " + error.message);
+    }
+});
 
 // Добавление этапа
 addStageBtn.addEventListener("click", () => {
@@ -124,6 +161,7 @@ addStageBtn.addEventListener("click", () => {
     });
     localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
     renderDiagram();
+    updateJsonEditor();
 });
 
 // Сохранение JSON
@@ -151,6 +189,7 @@ jsonFileInput.addEventListener("change", (event) => {
                 state.scenarios = JSON.parse(e.target.result);
                 localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
                 renderDiagram();
+                updateJsonEditor();
             } catch (error) {
                 alert("Ошибка загрузки JSON: " + error.message);
             }
@@ -190,7 +229,7 @@ function openEditModal(index) {
 }
 
 addOptionBtn.addEventListener("click", () => {
-    const stageIndex = state.scenarios.findIndex(s => s.id === state.selectedStage);
+    const stageIndex = state.scenarios.findIndex(s => s.id === stage.selectedStage);
     state.scenarios[stageIndex].options.push({
         text: "Новый вариант",
         next: ""
@@ -199,19 +238,47 @@ addOptionBtn.addEventListener("click", () => {
     openEditModal(stageIndex);
 });
 
+deleteStageBtn.addEventListener("click", () => {
+    const stageIndex = state.scenarios.findIndex(s => s.id === state.selectedStage);
+    state.scenarios.splice(stageIndex, 1);
+    // Обновляем связи
+    state.scenarios.forEach(stage => {
+        stage.options = stage.options.map(opt => ({
+            ...opt,
+            next: opt.next === state.selectedStage ? "" : opt.next
+        }));
+    });
+    localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
+    state.selectedStage = null;
+    editStageModal.classList.remove("active");
+    renderDiagram();
+    updateJsonEditor();
+});
+
 saveStageBtn.addEventListener("click", () => {
     const stageIndex = state.scenarios.findIndex(s => s.id === state.selectedStage);
     const stage = state.scenarios[stageIndex];
+    const oldId = stage.id;
     stage.id = editStageId.value;
     stage.text = editStageText.value;
     stage.options = Array.from(editStageOptions.children).map(row => ({
         text: row.querySelector("input").value,
         next: row.querySelector("select").value
     }));
+    // Обновляем связи, если ID изменился
+    if (oldId !== stage.id) {
+        state.scenarios.forEach(s => {
+            s.options = s.options.map(opt => ({
+                ...opt,
+                next: opt.next === oldId ? stage.id : opt.next
+            }));
+        });
+    }
     localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
     state.selectedStage = null;
     editStageModal.classList.remove("active");
     renderDiagram();
+    updateJsonEditor();
 });
 
 cancelStageBtn.addEventListener("click", () => {
