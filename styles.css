@@ -1,0 +1,202 @@
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  margin: 0;
+  padding: 15px;
+  min-width: 350px;
+  background: linear-gradient(135deg, #f9f9f9 0%, #ececec 100%);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+h1 {
+  font-size: 24px;
+  color: #222;
+  margin-bottom: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+h2 {
+  font-size: 18px;
+  color: #222;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  color: #333;
+  font-weight: 500;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #00CCAE;
+  box-shadow: 0 0 8px rgba(0, 204, 174, 0.2);
+  outline: none;
+}
+
+textarea {
+  resize: none;
+}
+
+button {
+  padding: 12px;
+  background: linear-gradient(135deg, #00CCAE, #00A88F);
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+  margin-top: 10px;
+}
+
+button:hover {
+  background: linear-gradient(135deg, #00A88F, #008C76);
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.editor-panel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  width: 100%;
+}
+
+.editor-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.editor-content {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.scenario-builder {
+  width: 60%;
+  min-width: 400px;
+}
+
+.json-preview {
+  width: 40%;
+  min-width: 300px;
+}
+
+@media (max-width: 1000px) {
+  .scenario-builder,
+  .json-preview {
+    width: 100%;
+  }
+}
+
+#json-output {
+  width: 100%;
+  height: 500px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  font-family: monospace;
+}
+
+.diagram-container {
+  width: 100%;
+  max-height: 600px;
+  overflow-x: auto;
+  overflow-y: auto;
+  position: relative;
+  padding-bottom: 20px;
+}
+
+#stages {
+  display: flex;
+  flex-wrap: nowrap;
+  position: relative;
+  min-height: 400px;
+  padding: 10px;
+}
+
+.stage-card {
+  width: 400px;
+  margin: 0 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.option-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #f9f9f9;
+}
+
+.stage-card h3,
+.stage-card h4 {
+  margin: 0 0 10px;
+  color: #222;
+}
+
+.stage-card textarea {
+  width: 100%;
+  height: 100px;
+}
+
+.stage-card input,
+.option-card input,
+.option-card select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+#arrows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
