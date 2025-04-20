@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактор сценариев</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -30,6 +30,9 @@
             <div id="edit-stage-options"></div>
             <button id="add-option-btn">Добавить вариант</button>
             <div class="modal-actions">
+                <button id="delete-stage-btn" class="icon-btn" style="background: #ff4444;">
+                    <span class="material-icons">delete</span> Удалить этап
+                </button>
                 <button id="save-stage-btn">Сохранить</button>
                 <button id="cancel-stage-btn">Отмена</button>
             </div>
@@ -62,7 +65,19 @@
             <div class="editor-content">
                 <div class="scenario-builder">
                     <h2>Схема сценария</h2>
+                    <div class="diagram-controls">
+                        <button id="toggle-json-btn" class="icon-btn">
+                            <span class="material-icons">code</span> Показать JSON
+                        </button>
+                    </div>
                     <div id="diagram" class="diagram-container"></div>
+                    <div id="json-panel" class="json-panel" style="display: none;">
+                        <h3>Редактировать JSON</h3>
+                        <textarea id="json-editor"></textarea>
+                        <button id="apply-json-btn" class="icon-btn">
+                            <span class="material-icons">check</span> Применить
+                        </button>
+                    </div>
                 </div>
                 <div class="ai-panel">
                     <h2>Помощник ИИ</h2>
