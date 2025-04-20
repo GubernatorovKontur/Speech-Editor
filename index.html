@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
 </head>
 <body>
     <!-- Модальное окно для ввода ФИО -->
@@ -39,6 +40,18 @@
         </div>
     </div>
 
+    <!-- Модальное окно для редактирования JSON -->
+    <div id="edit-json-modal" class="modal">
+        <div class="modal-content">
+            <h2>Редактировать JSON</h2>
+            <textarea id="json-editor"></textarea>
+            <div class="modal-actions">
+                <button id="apply-json-btn">Применить</button>
+                <button id="cancel-json-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="editor-panel">
             <div class="header">
@@ -54,6 +67,9 @@
                 <button id="add-stage-btn" class="icon-btn">
                     <span class="material-icons">add</span> Добавить этап
                 </button>
+                <button id="edit-json-btn" class="icon-btn">
+                    <span class="material-icons">code</span> Редактировать JSON
+                </button>
                 <button id="save-json-btn" class="icon-btn">
                     <span class="material-icons">save</span> Сохранить JSON
                 </button>
@@ -65,19 +81,7 @@
             <div class="editor-content">
                 <div class="scenario-builder">
                     <h2>Схема сценария</h2>
-                    <div class="diagram-controls">
-                        <button id="toggle-json-btn" class="icon-btn">
-                            <span class="material-icons">code</span> Показать JSON
-                        </button>
-                    </div>
                     <div id="diagram" class="diagram-container"></div>
-                    <div id="json-panel" class="json-panel" style="display: none;">
-                        <h3>Редактировать JSON</h3>
-                        <textarea id="json-editor"></textarea>
-                        <button id="apply-json-btn" class="icon-btn">
-                            <span class="material-icons">check</span> Применить
-                        </button>
-                    </div>
                 </div>
                 <div class="ai-panel">
                     <h2>Помощник ИИ</h2>
