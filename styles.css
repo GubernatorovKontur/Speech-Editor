@@ -2,12 +2,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Open Sans', sans-serif;
 }
 
 body {
-    background: linear-gradient(to bottom, #f9f9f9, #ececec);
-    color: #222;
+    background: #ffffff;
+    color: #333;
 }
 
 .container {
@@ -17,9 +17,8 @@ body {
 }
 
 .editor-panel {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    border-radius: 5px;
     padding: 20px;
 }
 
@@ -32,7 +31,8 @@ body {
 
 h1 {
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 600;
+    color: #111;
 }
 
 .user-info {
@@ -46,24 +46,32 @@ h1 {
     display: flex;
     align-items: center;
     gap: 5px;
-    background: #00CCAE;
+    background: #1A3C5E;
     color: #fff;
     border: none;
     padding: 8px 16px;
-    border-radius: 5px;
+    border-radius: 3px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 400;
     transition: background 0.3s;
 }
 
 .icon-btn:hover {
-    background: #00b398;
+    background: #15324d;
 }
 
 .icon-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
+}
+
+#delete-stage-btn {
+    background: #ff4444;
+}
+
+#delete-stage-btn:hover {
+    background: #e03e3e;
 }
 
 .editor-controls {
@@ -85,12 +93,24 @@ h1 {
     width: 30%;
     padding: 10px;
     background: #f5f5f5;
-    border-radius: 5px;
+    border-radius: 3px;
 }
 
 h2 {
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 10px;
+}
+
+h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 10px;
+}
+
+.diagram-controls {
     margin-bottom: 10px;
 }
 
@@ -102,8 +122,8 @@ h2 {
 
 .stage-card {
     background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
     padding: 10px;
     margin-bottom: 20px;
     cursor: pointer;
@@ -111,23 +131,40 @@ h2 {
 }
 
 .stage-card:hover {
-    border-color: #00CCAE;
+    border-color: #1A3C5E;
 }
 
 .stage-card.selected {
-    border-color: #00CCAE;
-    box-shadow: 0 0 5px rgba(0, 204, 174, 0.3);
+    border-color: #1A3C5E;
 }
 
 .stage-card h3 {
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 5px;
 }
 
 .stage-card p {
     font-size: 14px;
     color: #555;
+}
+
+.json-panel {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 3px;
+}
+
+#json-editor {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 14px;
+    resize: vertical;
 }
 
 .modal {
@@ -150,9 +187,10 @@ h2 {
 .modal-content {
     background: #fff;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 5px;
     width: 400px;
     max-width: 90%;
+    border: 1px solid #ddd;
 }
 
 .modal-content h2 {
@@ -163,7 +201,7 @@ h2 {
 .modal-content label {
     display: block;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 5px;
 }
 
@@ -172,8 +210,8 @@ h2 {
     width: 100%;
     padding: 8px;
     margin-bottom: 10px;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
     font-size: 14px;
 }
 
@@ -198,8 +236,8 @@ h2 {
 .option-row input,
 .option-row select {
     padding: 8px;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
     font-size: 14px;
 }
 
@@ -208,7 +246,7 @@ h2 {
     color: #fff;
     border: none;
     padding: 5px 10px;
-    border-radius: 5px;
+    border-radius: 3px;
     cursor: pointer;
 }
 
