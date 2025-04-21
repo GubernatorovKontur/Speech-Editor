@@ -53,7 +53,6 @@ function toggleButtons(enable) {
         selectModeBtn,
         dragModeBtn,
         editModeBtn
-        // Убрали changeFioBtn, чтобы она не блокировалась
     ];
 
     buttons.forEach(button => {
@@ -69,7 +68,6 @@ function toggleButtons(enable) {
 }
 
 function saveToLocalStorage(key, data) {
-    // Сохраняем данные как JSON-строку
     localStorage.setItem(key, JSON.stringify(data));
 }
 
@@ -79,9 +77,8 @@ function loadFromLocalStorage(key) {
     try {
         return JSON.parse(data);
     } catch (e) {
-        // Если данные не являются валидным JSON, предполагаем, что это строка (для обратной совместимости)
         console.warn(`Invalid JSON in localStorage for key "${key}". Treating as string.`);
-        return data; // Возвращаем строку как есть
+        return data;
     }
 }
 
@@ -117,6 +114,7 @@ function init() {
         }
     });
 
+    console.log("Scenarios before autoAlign:", state.scenarios); // Добавили лог
     DiagramEditor.autoAlign(state);
     DiagramEditor.renderDiagram(state);
 
@@ -162,7 +160,7 @@ function handleFioSubmit() {
     const fio = fioInput.value.trim();
     if (fio) {
         state.user = fio;
-        saveToLocalStorage("userFio", fio); // Сохраняем как JSON-строку
+        saveToLocalStorage("userFio", fio);
         userFio.textContent = fio;
         fioModal.classList.remove("active");
         enableEditor();
@@ -281,7 +279,8 @@ function openEditModal(index) {
         const deleteBtn = optionRow.querySelector("button");
         deleteBtn.addEventListener("click", () => {
             stage.options.splice(optIndex, 1);
-            save (index);
+            saveToLocalStorage("scenarios", state.scenarios);
+            openEditModal(index);
         });
         editStageOptions.appendChild(optionRow);
     });
