@@ -5,111 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактор сценариев</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Material+Icons&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js" defer></script>
 </head>
 <body>
     <!-- Модальное окно для ввода ФИО -->
-    <div id="fio-modal" class="modal">
+    <section id="fio-modal" class="modal" role="dialog" aria-labelledby="fio-modal-title">
         <div class="modal-content">
-            <h2>Введите ваше ФИО</h2>
-            <input type="text" id="fio-input" placeholder="Иванов Иван Иванович">
+            <h2 id="fio-modal-title">Введите ваше ФИО</h2>
+            <input type="text" id="fio-input" placeholder="Иванов Иван Иванович" required pattern="^[А-Яа-яЁё\s]+$" aria-label="Введите ваше ФИО">
             <button id="fio-submit">Сохранить</button>
         </div>
-    </div>
+    </section>
 
     <!-- Модальное окно для редактирования этапа -->
-    <div id="edit-stage-modal" class="modal">
+    <section id="edit-stage-modal" class="modal" role="dialog" aria-labelledby="edit-stage-title">
         <div class="modal-content">
-            <h2>Редактировать этап</h2>
-            <label>ID:</label>
-            <input type="text" id="edit-stage-id">
-            <label>Текст этапа:</label>
-            <textarea id="edit-stage-text"></textarea>
-            <label>Варианты ответов:</label>
+            <h2 id="edit-stage-title">Редактировать этап</h2>
+            <label for="edit-stage-id">ID:</label>
+            <input type="text" id="edit-stage-id" aria-label="ID этапа">
+            <label for="edit-stage-text">Текст этапа:</label>
+            <textarea id="edit-stage-text" aria-label="Текст этапа"></textarea>
+            <label for="edit-stage-options">Варианты ответов:</label>
             <div id="edit-stage-options"></div>
             <button id="add-option-btn">Добавить вариант</button>
             <div class="modal-actions">
-                <button id="delete-stage-btn" class="icon-btn" style="background: #ff4444;">
-                    <span class="material-icons">delete</span> Удалить этап
+                <button id="delete-stage-btn" class="icon-btn danger">
+                    <span class="material-icons" aria-hidden="true">delete</span> Удалить этап
                 </button>
                 <button id="save-stage-btn">Сохранить</button>
                 <button id="cancel-stage-btn">Отмена</button>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Модальное окно для редактирования JSON -->
-    <div id="edit-json-modal" class="modal">
+    <section id="edit-json-modal" class="modal" role="dialog" aria-labelledby="edit-json-title">
         <div class="modal-content">
-            <h2>Редактировать JSON</h2>
-            <textarea id="json-editor"></textarea>
+            <h2 id="edit-json-title">Редактировать JSON</h2>
+            <textarea id="json-editor" aria-label="Редактор JSON"></textarea>
             <div class="modal-actions">
                 <button id="apply-json-btn">Применить</button>
                 <button id="cancel-json-btn">Отмена</button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="container">
+    <!-- Основной интерфейс -->
+    <main class="container">
         <!-- Панель инструментов -->
-        <div class="toolbar">
-            <button id="select-mode-btn" class="toolbar-btn" title="Режим выделения">
-                <span class="material-icons">mouse</span>
+        <nav class="toolbar" aria-label="Панель инструментов">
+            <button id="select-mode-btn" class="toolbar-btn" title="Режим выделения" aria-label="Режим выделения">
+                <span class="material-icons" aria-hidden="true">mouse</span>
             </button>
-            <button id="drag-mode-btn" class="toolbar-btn" title="Режим перетаскивания">
-                <span class="material-icons">pan_tool</span>
+            <button id="drag-mode-btn" class="toolbar-btn" title="Режим перетаскивания" aria-label="Режим перетаскивания">
+                <span class="material-icons" aria-hidden="true">pan_tool</span>
             </button>
-            <button id="edit-mode-btn" class="toolbar-btn active" title="Режим редактирования">
-                <span class="material-icons">edit</span>
+            <button id="edit-mode-btn" class="toolbar-btn active" title="Режим редактирования" aria-label="Режим редактирования">
+                <span class="material-icons" aria-hidden="true">edit</span>
             </button>
-            <button id="toggle-arrows-btn" class="toolbar-btn" title="Показать/Скрыть стрелки">
-                <span class="material-icons">arrow_forward</span>
+            <button id="toggle-arrows-btn" class="toolbar-btn" title="Показать/Скрыть стрелки" aria-label="Показать/Скрыть стрелки">
+                <span class="material-icons" aria-hidden="true">arrow_forward</span>
             </button>
-        </div>
-        <div class="editor-panel">
-            <div class="header">
+        </nav>
+
+        <!-- Панель редактора -->
+        <section class="editor-panel">
+            <header class="header">
                 <h1>Редактор сценариев</h1>
                 <div class="user-info">
                     <span id="user-name">Вы вошли как: <span id="user-fio"></span></span>
-                    <button id="change-fio-btn" class="icon-btn">
-                        <span class="material-icons">edit</span>
+                    <button id="change-fio-btn" class="icon-btn" aria-label="Изменить ФИО">
+                        <span class="material-icons" aria-hidden="true">edit</span>
                     </button>
                 </div>
-            </div>
+            </header>
             <div class="editor-controls">
-                <button id="add-stage-btn" class="icon-btn">
-                    <span class="material-icons">add</span> Добавить этап
+                <button id="add-stage-btn" class="icon-btn" disabled>
+                    <span class="material-icons" aria-hidden="true">add</span> Добавить этап
                 </button>
-                <button id="auto-align-btn" class="icon-btn">
-                    <span class="material-icons">auto_fix_high</span> Автовиравнивание
+                <button id="auto-align-btn" class="icon-btn" disabled>
+                    <span class="material-icons" aria-hidden="true">auto_fix_high</span> Автовиравнивание
                 </button>
-                <button id="edit-json-btn" class="icon-btn">
-                    <span class="material-icons">code</span> Редактировать JSON
+                <button id="edit-json-btn" class="icon-btn" disabled>
+                    <span class="material-icons" aria-hidden="true">code</span> Редактировать JSON
                 </button>
-                <button id="save-json-btn" class="icon-btn">
-                    <span class="material-icons">save</span> Сохранить JSON
+                <button id="save-json-btn" class="icon-btn" disabled>
+                    <span class="material-icons" aria-hidden="true">save</span> Сохранить JSON
                 </button>
-                <button id="load-json-btn" class="icon-btn">
-                    <span class="material-icons">upload</span> Загрузить JSON
+                <button id="load-json-btn" class="icon-btn" disabled>
+                    <span class="material-icons" aria-hidden="true">upload</span> Загрузить JSON
                 </button>
                 <input type="file" id="json-file" style="display: none;" accept=".json">
             </div>
             <div class="editor-content">
-                <div class="scenario-builder">
+                <section class="scenario-builder">
                     <h2>Схема сценария</h2>
                     <div id="diagram-viewport" class="diagram-viewport">
                         <div id="diagram" class="diagram-container"></div>
                     </div>
-                </div>
-                <div class="ai-panel">
+                </section>
+                <aside class="ai-panel">
                     <h2>Помощник ИИ</h2>
                     <p>ИИ будет добавлен на следующем шаге.</p>
-                </div>
+                </aside>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script src="diagramEditor.js"></script>
     <script src="editor.js"></script>
