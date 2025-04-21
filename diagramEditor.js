@@ -79,12 +79,22 @@ const DiagramEditor = (function () {
     }
 
     function autoAlign(state) {
-        if (!state.scenarios || state.scenarios.length === 0) return;
+        if (!state.scenarios || state.scenarios.length === 0) {
+            console.warn("No scenarios to align.");
+            // Базовое распределение, если сценариев нет
+            state.scenarios.forEach((stage, index) => {
+                stagePositions.set(stage.id, { x: 1500 + index * 300, y: 100 });
+            });
+            return;
+        }
 
         const levels = new Map();
         const referencedStages = new Set(state.scenarios.flatMap(s => s.options.map(opt => opt.next).filter(Boolean)));
         let startStage = state.scenarios.find(s => !referencedStages.has(s.id));
-        if (!startStage) startStage = state.scenarios[0];
+        if (!startStage) {
+            console.warn("No start stage found, using first scenario.");
+            startStage = state.scenarios[0];
+        }
 
         function assignLevel(stageId, level = 0) {
             if (!stageId || levels.has(stageId)) return;
@@ -97,25 +107,36 @@ const DiagramEditor = (function () {
         }
         assignLevel(startStage.id);
 
+        console.log("Levels assigned:", Array.from(levels.entries()));
+
         const stagesByLevel = Array.from(levels.entries()).reduce((acc, [stageId, level]) => {
             if (!acc[level]) acc[level] = [];
             acc[level].push(stageId);
             return acc;
         }, []);
 
-        const stageWidth = 250;
-        const levelHeight = 200;
-        stagesByLevel.forEach((stageIds, level) => {
-            const count = stageIds.length;
-            const totalWidth = count * stageWidth;
-            const startX = 1500 - totalWidth / 2;
-            stageIds.forEach((stageId, index) => {
-                stagePositions.set(stageId, {
-                    x: startX + index * stageWidth,
-                    y: 100 + level * levelHeight
+        console.log("Stages by level:", stagesByLevel);
+
+        if (stagesByLevel.length === 0) {
+            console.warn("No levels assigned, using default positioning.");
+            state.scenarios.forEach((stage, index) => {
+                stagePositions.set(stage.id, { x: 1500 + index * 300, y: 100 });
+            });
+        } else {
+            const stageWidth = 250;
+            const levelHeight = 200;
+            stagesByLevel.forEach((stageIds, level) => {
+                const count = stageIds.length;
+                const totalWidth = count * stageWidth;
+                const startX = 1500 - totalWidth / 2;
+                stageIds.forEach((stageId, index) => {
+                    const x = startX + index * stageWidth;
+                    const y = 100 + level * levelHeight;
+                    stagePositions.set(stageId, { x, y });
+                    console.log(`Position for stage ${stageId}: x=${x}, y=${y}`);
                 });
             });
-        });
+        }
 
         renderDiagram(state);
     }
@@ -151,7 +172,7 @@ const DiagramEditor = (function () {
 
         state.scenarios.forEach((stage, index) => {
             if (!stagePositions.has(stage.id)) {
-                stagePositions.set(stage.id, { x: 1500, y: 100 });
+                stagePositions.set(stage.id, { x: 1500 + index * 300, y: 100 }); // Изменили, чтобы этапы не накладывались
             }
             const stageCard = createStageCard(stage, index, state);
             diagramContainer.appendChild(stageCard);
@@ -287,12 +308,14 @@ const DiagramEditor = (function () {
     }
 
     function renderArrows(state) {
+        // Удаляем все существующие стрелки
         const existingArrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         existingArrows.forEach(arrow => arrow.remove());
+        console.log("Cleared existing arrows.");
 
         if (!showArrows) return;
 
-        state.scenarios.forEach(stage => {
+        state.scenarios.forEach((stage, stageIndex) => {
             if (collapsedStages.has(stage.id)) return;
             const stageCard = Array.from(diagramContainer.querySelectorAll(".stage-card"))
                 .find(card => card.querySelector("h3").textContent === stage.id);
@@ -302,6 +325,12 @@ const DiagramEditor = (function () {
             const optionButtons = optionsDiv.querySelectorAll(".option-btn");
 
             stage.options.forEach((option, optIndex) => {
+                // Пропускаем первую стрелку (первый вариант первого этапа)
+                if (stageIndex === 0 && optIndex === 0) {
+                    console.log(`Skipping arrow for first option of first stage: ${stage.id} -> ${option.next}`);
+                    return;
+                }
+
                 const nextStage = state.scenarios.find(s => s.id === option.next);
                 if (nextStage && !collapsedStages.has(nextStage.id)) {
                     const pos = stagePositions.get(stage.id);
@@ -347,6 +376,8 @@ const DiagramEditor = (function () {
                     svg.addEventListener("mouseout", () => {
                         tooltip.style.display = "none";
                     });
+
+                    console.log(`Rendered arrow from ${stage.id} to ${nextStage.id}`);
                 }
             });
         });
