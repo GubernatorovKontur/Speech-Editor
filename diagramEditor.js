@@ -9,9 +9,11 @@ const DiagramEditor = (function () {
     let collapsedStages = new Set();
     let mode = "edit";
     let isDraggingStage = false;
+    let stateRef = null; // Ссылка на state для использования в функциях
 
-    function init(containerId) {
+    function init(containerId, state) {
         diagramContainer = document.getElementById(containerId);
+        stateRef = state; // Сохраняем ссылку на state
         const viewport = document.getElementById("diagram-viewport");
 
         viewport.addEventListener("wheel", (e) => {
@@ -100,12 +102,12 @@ const DiagramEditor = (function () {
 
     function checkCollision(x, y, currentStageId) {
         const stageWidth = 200;
-        const stageHeight = 100 + 30 * (state.scenarios.find(s => s.id === currentStageId)?.options.length || 0);
+        const stageHeight = 100 + 30 * (stateRef.scenarios.find(s => s.id === currentStageId)?.options.length || 0);
         const minDistance = 50;
 
         for (const [stageId, pos] of stagePositions) {
             if (stageId === currentStageId) continue;
-            const otherHeight = 100 + 30 * (state.scenarios.find(s => s.id === stageId)?.options.length || 0);
+            const otherHeight = 100 + 30 * (stateRef.scenarios.find(s => s.id === stageId)?.options.length || 0);
             const dx = Math.abs(x - pos.x);
             const dy = Math.abs(y - pos.y);
             if (dx < stageWidth + minDistance && dy < (stageHeight + otherHeight) / 2 + minDistance) {
@@ -121,6 +123,11 @@ const DiagramEditor = (function () {
     }
 
     function renderDiagram(state) {
+        if (!diagramContainer) {
+            console.error("DiagramEditor: diagramContainer is not initialized");
+            return;
+        }
+
         diagramContainer.innerHTML = "";
         state.activePath = state.activePath || [];
 
@@ -153,6 +160,7 @@ const DiagramEditor = (function () {
             `;
             stageCard.addEventListener("click", (e) => {
                 e.stopPropagation();
+                console.log("Current mode:", mode);
                 if (mode === "edit" && !state.isDragging) {
                     state.openEditModal(index);
                 } else if (mode === "select") {
@@ -349,7 +357,9 @@ const DiagramEditor = (function () {
     }
 
     function setMode(newMode) {
+        console.log("Switching to mode:", newMode);
         mode = newMode;
+        renderDiagram(stateRef);
     }
 
     return {
