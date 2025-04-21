@@ -43,7 +43,12 @@ state.openEditModal = function(index) {
 
 // Инициализация
 function init() {
-    DiagramEditor.init("diagram");
+    if (typeof DiagramEditor === "undefined") {
+        console.error("DiagramEditor is not defined");
+        return;
+    }
+
+    DiagramEditor.init("diagram", state);
 
     const savedFio = localStorage.getItem("userFio");
     if (savedFio) {
@@ -83,14 +88,13 @@ function init() {
 }
 
 function setMode(mode) {
-    DiagramEditor.setMode(mode);
     selectModeBtn.classList.remove("active");
     dragModeBtn.classList.remove("active");
     editModeBtn.classList.remove("active");
     if (mode === "select") selectModeBtn.classList.add("active");
     else if (mode === "drag") dragModeBtn.classList.add("active");
     else if (mode === "edit") editModeBtn.classList.add("active");
-    DiagramEditor.renderDiagram(state);
+    DiagramEditor.setMode(mode);
 }
 
 function enableEditor() {
