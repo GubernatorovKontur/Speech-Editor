@@ -12,28 +12,28 @@
 </head>
 <body>
     <!-- Модальное окно для ввода ФИО -->
-    <section id="fio-modal" class="modal" role="dialog" aria-labelledby="fio-modal-title">
+    <section id="fio-modal" class="modal">
         <div class="modal-content">
-            <h2 id="fio-modal-title">Введите ваше ФИО</h2>
-            <input type="text" id="fio-input" placeholder="Иванов Иван Иванович" required pattern="^[А-Яа-яЁё\s]+$" aria-label="Введите ваше ФИО">
+            <h2>Введите ваше ФИО</h2>
+            <input type="text" id="fio-input" placeholder="Иванов Иван Иванович">
             <button id="fio-submit">Сохранить</button>
         </div>
     </section>
 
     <!-- Модальное окно для редактирования этапа -->
-    <section id="edit-stage-modal" class="modal" role="dialog" aria-labelledby="edit-stage-title">
+    <section id="edit-stage-modal" class="modal">
         <div class="modal-content">
-            <h2 id="edit-stage-title">Редактировать этап</h2>
+            <h2>Редактировать этап</h2>
             <label for="edit-stage-id">ID:</label>
-            <input type="text" id="edit-stage-id" aria-label="ID этапа">
+            <input type="text" id="edit-stage-id">
             <label for="edit-stage-text">Текст этапа:</label>
-            <textarea id="edit-stage-text" aria-label="Текст этапа"></textarea>
+            <textarea id="edit-stage-text"></textarea>
             <label for="edit-stage-options">Варианты ответов:</label>
             <div id="edit-stage-options"></div>
             <button id="add-option-btn">Добавить вариант</button>
             <div class="modal-actions">
                 <button id="delete-stage-btn" class="icon-btn danger">
-                    <span class="material-icons" aria-hidden="true">delete</span> Удалить этап
+                    <span class="material-icons">delete</span> Удалить этап
                 </button>
                 <button id="save-stage-btn">Сохранить</button>
                 <button id="cancel-stage-btn">Отмена</button>
@@ -42,10 +42,10 @@
     </section>
 
     <!-- Модальное окно для редактирования JSON -->
-    <section id="edit-json-modal" class="modal" role="dialog" aria-labelledby="edit-json-title">
+    <section id="edit-json-modal" class="modal">
         <div class="modal-content">
-            <h2 id="edit-json-title">Редактировать JSON</h2>
-            <textarea id="json-editor" aria-label="Редактор JSON"></textarea>
+            <h2>Редактировать JSON</h2>
+            <textarea id="json-editor"></textarea>
             <div class="modal-actions">
                 <button id="apply-json-btn">Применить</button>
                 <button id="cancel-json-btn">Отмена</button>
@@ -56,18 +56,18 @@
     <!-- Основной интерфейс -->
     <main class="container">
         <!-- Панель инструментов -->
-        <nav class="toolbar" aria-label="Панель инструментов">
-            <button id="select-mode-btn" class="toolbar-btn" title="Режим выделения" aria-label="Режим выделения">
-                <span class="material-icons" aria-hidden="true">mouse</span>
+        <nav class="toolbar">
+            <button id="select-mode-btn" class="toolbar-btn" title="Режим выделения">
+                <span class="material-icons">mouse</span>
             </button>
-            <button id="drag-mode-btn" class="toolbar-btn" title="Режим перетаскивания" aria-label="Режим перетаскивания">
-                <span class="material-icons" aria-hidden="true">pan_tool</span>
+            <button id="drag-mode-btn" class="toolbar-btn" title="Режим перетаскивания">
+                <span class="material-icons">pan_tool</span>
             </button>
-            <button id="edit-mode-btn" class="toolbar-btn active" title="Режим редактирования" aria-label="Режим редактирования">
-                <span class="material-icons" aria-hidden="true">edit</span>
+            <button id="edit-mode-btn" class="toolbar-btn active" title="Режим редактирования">
+                <span class="material-icons">edit</span>
             </button>
-            <button id="toggle-arrows-btn" class="toolbar-btn" title="Показать/Скрыть стрелки" aria-label="Показать/Скрыть стрелки">
-                <span class="material-icons" aria-hidden="true">arrow_forward</span>
+            <button id="toggle-arrows-btn" class="toolbar-btn" title="Показать/Скрыть стрелки">
+                <span class="material-icons">arrow_forward</span>
             </button>
         </nav>
 
@@ -77,26 +77,26 @@
                 <h1>Редактор сценариев</h1>
                 <div class="user-info">
                     <span id="user-name">Вы вошли как: <span id="user-fio"></span></span>
-                    <button id="change-fio-btn" class="icon-btn" aria-label="Изменить ФИО">
-                        <span class="material-icons" aria-hidden="true">edit</span>
+                    <button id="change-fio-btn" class="icon-btn">
+                        <span class="material-icons">edit</span>
                     </button>
                 </div>
             </header>
             <div class="editor-controls">
                 <button id="add-stage-btn" class="icon-btn" disabled>
-                    <span class="material-icons" aria-hidden="true">add</span> Добавить этап
+                    <span class="material-icons">add</span> Добавить этап
                 </button>
                 <button id="auto-align-btn" class="icon-btn" disabled>
-                    <span class="material-icons" aria-hidden="true">auto_fix_high</span> Автовиравнивание
+                    <span class="material-icons">auto_fix_high</span> Автовиравнивание
                 </button>
                 <button id="edit-json-btn" class="icon-btn" disabled>
-                    <span class="material-icons" aria-hidden="true">code</span> Редактировать JSON
+                    <span class="material-icons">code</span> Редактировать JSON
                 </button>
                 <button id="save-json-btn" class="icon-btn" disabled>
-                    <span class="material-icons" aria-hidden="true">save</span> Сохранить JSON
+                    <span class="material-icons">save</span> Сохранить JSON
                 </button>
                 <button id="load-json-btn" class="icon-btn" disabled>
-                    <span class="material-icons" aria-hidden="true">upload</span> Загрузить JSON
+                    <span class="material-icons">upload</span> Загрузить JSON
                 </button>
                 <input type="file" id="json-file" style="display: none;" accept=".json">
             </div>
