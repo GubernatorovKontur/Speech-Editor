@@ -41,7 +41,42 @@ state.openEditModal = function(index) {
     openEditModal(index);
 };
 
-// Инициализация
+// Вспомогательные функции
+function toggleButtons(enable) {
+    const buttons = [
+        addStageBtn,
+        autoAlignBtn,
+        editJsonBtn,
+        saveJsonBtn,
+        loadJsonBtn,
+        toggleArrowsBtn,
+        selectModeBtn,
+        dragModeBtn,
+        editModeBtn
+    ];
+
+    buttons.forEach(button => {
+        button.disabled = !enable;
+    });
+
+    document.querySelector(".editor-panel").style.opacity = enable ? "1" : "0.5";
+}
+
+function validateFio(fio) {
+    const fioRegex = /^[А-Яа-яЁё\s]+$/;
+    return fioRegex.test(fio.trim());
+}
+
+function saveToLocalStorage(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+function loadFromLocalStorage(key) {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+}
+
+// Инициализация приложения
 function init() {
     if (typeof DiagramEditor === "undefined") {
         console.error("DiagramEditor is not defined");
@@ -50,7 +85,7 @@ function init() {
 
     DiagramEditor.init("diagram", state);
 
-    const savedFio = localStorage.getItem("userFio");
+    const savedFio = loadFromLocalStorage("userFio");
     if (savedFio) {
         state.user = savedFio;
         userFio.textContent = savedFio;
@@ -60,9 +95,9 @@ function init() {
         disableEditor();
     }
 
-    const savedScenarios = localStorage.getItem("scenarios");
+    const savedScenarios = loadFromLocalStorage("scenarios");
     if (savedScenarios) {
-        state.scenarios = JSON.parse(savedScenarios);
+        state.scenarios = savedScenarios;
         cleanScenarios();
     }
 
@@ -75,16 +110,127 @@ function init() {
     DiagramEditor.autoAlign(state);
     DiagramEditor.renderDiagram(state);
 
-    // Обработчики режимов
-    selectModeBtn.addEventListener("click", () => {
-        setMode("select");
+    bindEventListeners();
+}
+
+// Включение/отключение редактора
+function enableEditor() {
+    toggleButtons(true);
+}
+
+function disableEditor() {
+    toggleButtons(false);
+}
+
+// Привязка обработчиков событий
+function bindEventListeners() {
+    fioSubmit.addEventListener("click", handleFioSubmit);
+    changeFioBtn.addEventListener("click", handleFioChange);
+
+    editJsonBtn.addEventListener("click", openJsonEditor);
+    applyJsonBtn.addEventListener("click", applyJsonChanges);
+    cancelJsonBtn.addEventListener("click", closeJsonEditor);
+
+    autoAlignBtn.addEventListener("click", () => DiagramEditor.autoAlign(state));
+    toggleArrowsBtn.addEventListener("click", () => {
+        DiagramEditor.toggleArrows();
+        DiagramEditor.renderDiagram(state);
     });
-    dragModeBtn.addEventListener("click", () => {
-        setMode("drag");
-    });
-    editModeBtn.addEventListener("click", () => {
-        setMode("edit");
-    });
+
+    addStageBtn.addEventListener("click", addNewStage);
+    saveJsonBtn.addEventListener("click", saveScenariosToFile);
+    loadJsonBtn.addEventListener("click", () => jsonFileInput.click());
+    jsonFileInput.addEventListener("change", handleJsonFileLoad);
+
+    selectModeBtn.addEventListener("click", () => setMode("select"));
+    dragModeBtn.addEventListener("click", () => setMode("drag"));
+    editModeBtn.addEventListener("click", () => setMode("edit"));
+}
+
+// Обработчики событий
+function handleFioSubmit() {
+    const fio = fioInput.value.trim();
+    if (validateFio(fio)) {
+        state.user = fio;
+        saveToLocalStorage("userFio", fio);
+        userFio.textContent = fio;
+        fioModal.classList.remove("active");
+        enableEditor();
+    } else {
+        alert("Пожалуйста, введите корректное ФИО (только буквы и пробелы).");
+    }
+}
+
+function handleFioChange() {
+    localStorage.removeItem("userFio");
+    state.user = null;
+    fioModal.classList.add("active");
+    disableEditor();
+}
+
+function openJsonEditor() {
+    jsonEditor.value = JSON.stringify(state.scenarios, null, 2);
+    editJsonModal.classList.add("active");
+}
+
+function applyJsonChanges() {
+    try {
+        state.scenarios = JSON.parse(jsonEditor.value);
+        cleanScenarios();
+        saveToLocalStorage("scenarios", state.scenarios);
+        DiagramEditor.autoAlign(state);
+        DiagramEditor.renderDiagram(state);
+        editJsonModal.classList.remove("active");
+    } catch (error) {
+        alert(`Ошибка в JSON: ${error.message}`);
+    }
+}
+
+function closeJsonEditor() {
+    editJsonModal.classList.remove("active");
+}
+
+function addNewStage() {
+    const newId = String(state.scenarios.length + 1);
+    state.scenarios.push({ id: newId, text: "Новый этап", options: [] });
+    cleanScenarios();
+    saveToLocalStorage("scenarios", state.scenarios);
+    DiagramEditor.autoAlign(state);
+    DiagramEditor.renderDiagram(state);
+}
+
+function saveScenariosToFile() {
+    const blob = new Blob([JSON.stringify(state.scenarios, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scenarios.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function handleJsonFileLoad(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            state.scenarios = JSON.parse(e.target.result);
+            cleanScenarios();
+            state.scenarios.forEach((stage, index) => {
+                if (!stage.id) {
+                    stage.id = String(index + 1);
+                }
+            });
+            saveToLocalStorage("scenarios", state.scenarios);
+            DiagramEditor.autoAlign(state);
+            DiagramEditor.renderDiagram(state);
+        } catch (error) {
+            alert(`Ошибка загрузки JSON: ${error.message}`);
+        }
+    };
+    reader.readAsText(file);
 }
 
 function setMode(mode) {
@@ -97,145 +243,12 @@ function setMode(mode) {
     DiagramEditor.setMode(mode);
 }
 
-function enableEditor() {
-    addStageBtn.disabled = false;
-    autoAlignBtn.disabled = false;
-    editJsonBtn.disabled = false;
-    saveJsonBtn.disabled = false;
-    loadJsonBtn.disabled = false;
-    toggleArrowsBtn.disabled = false;
-    selectModeBtn.disabled = false;
-    dragModeBtn.disabled = false;
-    editModeBtn.disabled = false;
-    document.querySelector(".editor-panel").style.opacity = "1";
-}
-
-function disableEditor() {
-    addStageBtn.disabled = true;
-    autoAlignBtn.disabled = true;
-    editJsonBtn.disabled = true;
-    saveJsonBtn.disabled = true;
-    loadJsonBtn.disabled = true;
-    toggleArrowsBtn.disabled = true;
-    selectModeBtn.disabled = true;
-    dragModeBtn.disabled = true;
-    editModeBtn.disabled = true;
-    document.querySelector(".editor-panel").style.opacity = "0.5";
-}
-
-fioSubmit.addEventListener("click", () => {
-    const fio = fioInput.value.trim();
-    if (fio) {
-        state.user = fio;
-        localStorage.setItem("userFio", fio);
-        userFio.textContent = fio;
-        fioModal.classList.remove("active");
-        enableEditor();
-    } else {
-        alert("Пожалуйста, введите ваше ФИО.");
-    }
-});
-
-changeFioBtn.addEventListener("click", () => {
-    localStorage.removeItem("userFio");
-    state.user = null;
-    fioModal.classList.add("active");
-    disableEditor();
-});
-
 function cleanScenarios() {
     const stageIds = state.scenarios.map(s => s.id);
     state.scenarios.forEach(stage => {
         stage.options = stage.options.filter(opt => !opt.next || stageIds.includes(opt.next));
     });
 }
-
-editJsonBtn.addEventListener("click", () => {
-    jsonEditor.value = JSON.stringify(state.scenarios, null, 2);
-    editJsonModal.classList.add("active");
-});
-
-applyJsonBtn.addEventListener("click", () => {
-    try {
-        state.scenarios = JSON.parse(jsonEditor.value);
-        cleanScenarios();
-        state.scenarios.forEach((stage, index) => {
-            if (!stage.id) {
-                stage.id = String(index + 1);
-            }
-        });
-        localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-        DiagramEditor.autoAlign(state);
-        DiagramEditor.renderDiagram(state);
-        editJsonModal.classList.remove("active");
-    } catch (error) {
-        alert("Ошибка в JSON: " + error.message);
-    }
-});
-
-cancelJsonBtn.addEventListener("click", () => {
-    editJsonModal.classList.remove("active");
-});
-
-autoAlignBtn.addEventListener("click", () => {
-    DiagramEditor.autoAlign(state);
-});
-
-toggleArrowsBtn.addEventListener("click", () => {
-    DiagramEditor.toggleArrows();
-    DiagramEditor.renderDiagram(state);
-});
-
-addStageBtn.addEventListener("click", () => {
-    const newId = String(state.scenarios.length + 1);
-    state.scenarios.push({
-        id: newId,
-        text: "Новый этап",
-        options: []
-    });
-    cleanScenarios();
-    localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-    DiagramEditor.autoAlign(state);
-    DiagramEditor.renderDiagram(state);
-});
-
-saveJsonBtn.addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(state.scenarios, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "scenarios.json";
-    a.click();
-    URL.revokeObjectURL(url);
-});
-
-loadJsonBtn.addEventListener("click", () => {
-    jsonFileInput.click();
-});
-
-jsonFileInput.addEventListener("change", (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                state.scenarios = JSON.parse(e.target.result);
-                cleanScenarios();
-                state.scenarios.forEach((stage, index) => {
-                    if (!stage.id) {
-                        stage.id = String(index + 1);
-                    }
-                });
-                localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-                DiagramEditor.autoAlign(state);
-                DiagramEditor.renderDiagram(state);
-            } catch (error) {
-                alert("Ошибка загрузки JSON: " + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
-});
 
 function openEditModal(index) {
     const stage = state.scenarios[index];
@@ -257,7 +270,7 @@ function openEditModal(index) {
         const deleteBtn = optionRow.querySelector("button");
         deleteBtn.addEventListener("click", () => {
             stage.options.splice(optIndex, 1);
-            localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
+            saveToLocalStorage("scenarios", state.scenarios);
             openEditModal(index);
         });
         editStageOptions.appendChild(optionRow);
@@ -272,7 +285,7 @@ addOptionBtn.addEventListener("click", () => {
         text: "Новый вариант",
         next: ""
     });
-    localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
+    saveToLocalStorage("scenarios", state.scenarios);
     openEditModal(stageIndex);
 });
 
@@ -280,7 +293,7 @@ deleteStageBtn.addEventListener("click", () => {
     const stageIndex = state.scenarios.findIndex(s => s.id === state.selectedStage);
     state.scenarios.splice(stageIndex, 1);
     cleanScenarios();
-    localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
+    saveToLocalStorage("scenarios", state.scenarios);
     state.selectedStage = null;
     editStageModal.classList.remove("active");
     DiagramEditor.autoAlign(state);
@@ -306,7 +319,7 @@ saveStageBtn.addEventListener("click", () => {
         });
     }
     cleanScenarios();
-    localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
+    saveToLocalStorage("scenarios", state.scenarios);
     state.selectedStage = null;
     editStageModal.classList.remove("active");
     DiagramEditor.autoAlign(state);
@@ -319,4 +332,5 @@ cancelStageBtn.addEventListener("click", () => {
     DiagramEditor.renderDiagram(state);
 });
 
+// Запуск приложения
 init();
