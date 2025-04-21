@@ -78,6 +78,7 @@ function loadFromLocalStorage(key) {
 
 // Инициализация приложения
 function init() {
+    console.log("Initializing application...");
     if (typeof DiagramEditor === "undefined") {
         console.error("DiagramEditor is not defined");
         return;
