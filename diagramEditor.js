@@ -221,7 +221,7 @@ const DiagramEditor = (function () {
                     setTimeout(() => {
                         state.isDragging = false;
                         isDraggingStage = false;
-                        displayArrows(); // Обновлено
+                        displayArrows();
                         renderArrows(state);
                     }, 100);
                 }
@@ -279,7 +279,7 @@ const DiagramEditor = (function () {
         });
     }
 
-    function displayArrows() { // Переименовано
+    function displayArrows() {
         const arrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         arrows.forEach(arrow => {
             arrow.style.display = "";
