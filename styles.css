@@ -300,7 +300,7 @@ h3 {
 }
 
 .modal.active {
-    display: flex;
+    display: flex !important;
 }
 
 .modal-content {
