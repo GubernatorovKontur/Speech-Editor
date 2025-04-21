@@ -1,5 +1,5 @@
 const DiagramEditor = (function () {
-    console.log("Loading DiagramEditor..."); // Отладочный лог
+    console.log("Loading DiagramEditor...");
 
     const MIN_SCALE = 0.3;
     const MAX_SCALE = 2;
@@ -221,7 +221,7 @@ const DiagramEditor = (function () {
                     setTimeout(() => {
                         state.isDragging = false;
                         isDraggingStage = false;
-                        showArrows();
+                        displayArrows(); // Обновлено
                         renderArrows(state);
                     }, 100);
                 }
@@ -279,7 +279,7 @@ const DiagramEditor = (function () {
         });
     }
 
-    function showArrows() {
+    function displayArrows() { // Переименовано
         const arrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         arrows.forEach(arrow => {
             arrow.style.display = "";
