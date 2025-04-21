@@ -58,12 +58,17 @@ function toggleButtons(enable) {
     buttons.forEach(button => {
         if (button) {
             button.disabled = !enable;
+            console.log(`Button ${button.id} disabled: ${button.disabled}`);
+        } else {
+            console.error("Button not found:", button);
         }
     });
 
     const editorPanel = document.querySelector(".editor-panel");
     if (editorPanel) {
         editorPanel.style.opacity = enable ? "1" : "0.5";
+    } else {
+        console.error("Editor panel not found");
     }
 
     console.log(`Buttons ${enable ? 'enabled' : 'disabled'}`);
@@ -71,7 +76,7 @@ function toggleButtons(enable) {
 
 function validateFio(fio) {
     const fioRegex = /^[А-Яа-яЁё\s]+$/;
-    return fioRegex.test(fio.trim());
+    return fio && fioRegex.test(fio.trim());
 }
 
 function saveToLocalStorage(key, data) {
@@ -87,6 +92,18 @@ function loadFromLocalStorage(key) {
 
 // Инициализация приложения
 function init() {
+    console.log("Initializing application...");
+
+    // Проверка наличия элементов DOM
+    if (!fioModal) {
+        console.error("FIO modal not found");
+        return;
+    }
+    if (!userFio) {
+        console.error("User FIO element not found");
+        return;
+    }
+
     if (typeof DiagramEditor === "undefined") {
         console.error("DiagramEditor is not defined");
         return;
@@ -96,11 +113,15 @@ function init() {
 
     const savedFio = loadFromLocalStorage("userFio");
     console.log("Saved FIO:", savedFio);
-    if (savedFio) {
+
+    // Более строгая проверка на валидность ФИО
+    if (savedFio && validateFio(savedFio)) {
         state.user = savedFio;
         userFio.textContent = savedFio;
         enableEditor();
+        console.log("FIO loaded, editor enabled");
     } else {
+        console.log("No valid FIO found, showing modal");
         fioModal.classList.add("active");
         disableEditor();
     }
@@ -136,7 +157,16 @@ function disableEditor() {
 
 // Привязка обработчиков событий
 function bindEventListeners() {
+    if (!fioSubmit) {
+        console.error("FIO submit button not found");
+        return;
+    }
     fioSubmit.addEventListener("click", handleFioSubmit);
+
+    if (!changeFioBtn) {
+        console.error("Change FIO button not found");
+        return;
+    }
     changeFioBtn.addEventListener("click", handleFioChange);
 
     editJsonBtn.addEventListener("click", openJsonEditor);
