@@ -7,15 +7,13 @@ const DiagramEditor = (function () {
     let startDrag = { x: 0, y: 0 };
     let showArrows = true;
     let collapsedStages = new Set();
-    let mode = "edit"; // Режим: "select", "drag", "edit"
-    let lastRenderTime = 0;
-    const renderDelay = 100; // Задержка для debounce
+    let mode = "edit";
+    let isDraggingStage = false;
 
     function init(containerId) {
         diagramContainer = document.getElementById(containerId);
         const viewport = document.getElementById("diagram-viewport");
 
-        // Масштабирование через колёсико мыши
         viewport.addEventListener("wheel", (e) => {
             e.preventDefault();
             const delta = e.deltaY > 0 ? 0.9 : 1.1;
@@ -24,7 +22,6 @@ const DiagramEditor = (function () {
             updateTransform();
         });
 
-        // Перемещение камеры
         viewport.addEventListener("mousedown", (e) => {
             if (e.button === 0 && !e.target.closest(".stage-card")) {
                 isDraggingCamera = true;
@@ -35,6 +32,7 @@ const DiagramEditor = (function () {
 
         viewport.addEventListener("mousemove", (e) => {
             if (isDraggingCamera) {
+                e.preventDefault();
                 const dx = (e.clientX - startDrag.x) / camera.scale;
                 const dy = (e.clientY - startDrag.y) / camera.scale;
                 camera.x += dx;
@@ -84,7 +82,7 @@ const DiagramEditor = (function () {
         }, []);
 
         const stageWidth = 250;
-        const levelHeight = 150;
+        const levelHeight = 200;
         stagesByLevel.forEach((stageIds, level) => {
             const count = stageIds.length;
             const totalWidth = count * stageWidth;
@@ -102,20 +100,20 @@ const DiagramEditor = (function () {
 
     function checkCollision(x, y, currentStageId) {
         const stageWidth = 200;
-        const stageHeight = 100; // Примерная высота этапа с вариантами
-        const minDistance = 20;
+        const stageHeight = 100 + 30 * (state.scenarios.find(s => s.id === currentStageId)?.options.length || 0);
+        const minDistance = 50;
 
         for (const [stageId, pos] of stagePositions) {
             if (stageId === currentStageId) continue;
+            const otherHeight = 100 + 30 * (state.scenarios.find(s => s.id === stageId)?.options.length || 0);
             const dx = Math.abs(x - pos.x);
             const dy = Math.abs(y - pos.y);
-            if (dx < stageWidth + minDistance && dy < stageHeight + minDistance) {
-                // Если блоки слишком близко, сдвигаем текущий блок
+            if (dx < stageWidth + minDistance && dy < (stageHeight + otherHeight) / 2 + minDistance) {
                 if (dx < stageWidth + minDistance) {
                     x = pos.x + (x < pos.x ? -(stageWidth + minDistance) : (stageWidth + minDistance));
                 }
-                if (dy < stageHeight + minDistance) {
-                    y = pos.y + (y < pos.y ? -(stageHeight + minDistance) : (stageHeight + minDistance));
+                if (dy < (stageHeight + otherHeight) / 2 + minDistance) {
+                    y = pos.y + (y < pos.y ? -((stageHeight + otherHeight) / 2 + minDistance) : ((stageHeight + otherHeight) / 2 + minDistance));
                 }
             }
         }
@@ -124,7 +122,7 @@ const DiagramEditor = (function () {
 
     function renderDiagram(state) {
         diagramContainer.innerHTML = "";
-        state.activePath = [];
+        state.activePath = state.activePath || [];
 
         state.scenarios.forEach((stage, index) => {
             if (!stagePositions.has(stage.id)) {
@@ -164,11 +162,12 @@ const DiagramEditor = (function () {
             });
             diagramContainer.appendChild(stageCard);
 
-            // Перетаскивание этапа
             if (mode === "drag" || mode === "edit") {
                 interact(stageCard).draggable({
                     onstart: () => {
                         state.isDragging = true;
+                        isDraggingStage = true;
+                        hideArrows();
                     },
                     onmove: (event) => {
                         const target = event.target;
@@ -180,11 +179,13 @@ const DiagramEditor = (function () {
                         target.style.left = `${x}px`;
                         target.style.top = `${y}px`;
                         stagePositions.set(stage.id, { x, y });
-                        debounceRenderArrows(state);
                     },
                     onend: () => {
                         setTimeout(() => {
                             state.isDragging = false;
+                            isDraggingStage = false;
+                            showArrows();
+                            renderArrows(state);
                         }, 100);
                     }
                 });
@@ -232,15 +233,24 @@ const DiagramEditor = (function () {
             });
         });
 
-        renderArrows(state);
+        if (!isDraggingStage) {
+            renderArrows(state);
+        }
         updateTransform();
     }
 
-    function debounceRenderArrows(state) {
-        const now = Date.now();
-        if (now - lastRenderTime < renderDelay) return;
-        lastRenderTime = now;
-        renderArrows(state);
+    function hideArrows() {
+        const arrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
+        arrows.forEach(arrow => {
+            arrow.style.display = "none";
+        });
+    }
+
+    function showArrows() {
+        const arrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
+        arrows.forEach(arrow => {
+            arrow.style.display = "";
+        });
     }
 
     function renderArrows(state) {
@@ -310,19 +320,26 @@ const DiagramEditor = (function () {
     }
 
     function getPathTo(fromId, toId, scenarios) {
-        const path = [fromId];
+        const path = [];
+        if (!fromId || !scenarios.some(s => s.id === fromId)) return path;
+        path.push(fromId);
+
         function findPath(currentId) {
             if (currentId === toId) return true;
             const stage = scenarios.find(s => s.id === currentId);
             if (!stage) return false;
             for (const option of stage.options) {
-                if (option.next && findPath(option.next)) {
+                if (option.next && scenarios.some(s => s.id === option.next)) {
                     path.push(option.next);
-                    return true;
+                    if (option.next === toId || findPath(option.next)) {
+                        return true;
+                    }
+                    path.pop();
                 }
             }
             return false;
         }
+
         findPath(fromId);
         return path;
     }
@@ -333,7 +350,6 @@ const DiagramEditor = (function () {
 
     function setMode(newMode) {
         mode = newMode;
-        renderDiagram(state);
     }
 
     return {
