@@ -3,7 +3,7 @@ const state = {
     scenarios: [],
     user: null,
     selectedStage: null,
-    activePath: [], // Путь, который выбрал пользователь
+    activePath: [],
     isDragging: false
 };
 
@@ -23,7 +23,6 @@ const editJsonModal = document.getElementById("edit-json-modal");
 const jsonEditor = document.getElementById("json-editor");
 const applyJsonBtn = document.getElementById("apply-json-btn");
 const cancelJsonBtn = document.getElementById("cancel-json-btn");
-const diagram = document.getElementById("diagram");
 const editStageModal = document.getElementById("edit-stage-modal");
 const editStageId = document.getElementById("edit-stage-id");
 const editStageText = document.getElementById("edit-stage-text");
@@ -32,9 +31,18 @@ const addOptionBtn = document.getElementById("add-option-btn");
 const deleteStageBtn = document.getElementById("delete-stage-btn");
 const saveStageBtn = document.getElementById("save-stage-btn");
 const cancelStageBtn = document.getElementById("cancel-stage-btn");
+const toggleArrowsBtn = document.getElementById("toggle-arrows-btn");
+
+// Привязываем метод открытия модального окна к состоянию
+state.openEditModal = function(index) {
+    openEditModal(index);
+};
 
 // Инициализация
 function init() {
+    // Инициализация редактора
+    DiagramEditor.init("diagram");
+
     // Проверяем ФИО
     const savedFio = localStorage.getItem("userFio");
     if (savedFio) {
@@ -53,8 +61,15 @@ function init() {
         cleanScenarios();
     }
 
-    autoAlign(); // Автовиравнивание при загрузке
-    renderDiagram();
+    // Присваиваем ID по умолчанию (цифры)
+    state.scenarios.forEach((stage, index) => {
+        if (!stage.id || stage.id.startsWith("stage_")) {
+            stage.id = String(index + 1);
+        }
+    });
+
+    DiagramEditor.autoAlign(state);
+    DiagramEditor.renderDiagram(state);
 }
 
 // Активация/деактивация редактора
@@ -64,6 +79,7 @@ function enableEditor() {
     editJsonBtn.disabled = false;
     saveJsonBtn.disabled = false;
     loadJsonBtn.disabled = false;
+    toggleArrowsBtn.disabled = false;
     document.querySelector(".editor-panel").style.opacity = "1";
 }
 
@@ -73,6 +89,7 @@ function disableEditor() {
     editJsonBtn.disabled = true;
     saveJsonBtn.disabled = true;
     loadJsonBtn.disabled = true;
+    toggleArrowsBtn.disabled = true;
     document.querySelector(".editor-panel").style.opacity = "0.5";
 }
 
@@ -105,201 +122,6 @@ function cleanScenarios() {
     });
 }
 
-// Автовиравнивание
-function autoAlign() {
-    if (state.scenarios.length === 0) return;
-
-    // Определяем уровни вложенности
-    const levels = new Map();
-    const referencedStages = new Set(state.scenarios.flatMap(s => s.options.map(opt => opt.next).filter(Boolean)));
-    let startStage = state.scenarios.find(s => !referencedStages.has(s.id));
-    if (!startStage) startStage = state.scenarios[0];
-
-    function assignLevel(stageId, level = 0) {
-        if (!stageId || levels.has(stageId)) return;
-        levels.set(stageId, level);
-        const stage = state.scenarios.find(s => s.id === stageId);
-        if (!stage) return;
-        stage.options.forEach(opt => {
-            if (opt.next) assignLevel(opt.next, level + 1);
-        });
-    }
-    assignLevel(startStage.id);
-
-    // Группируем этапы по уровням
-    const stagesByLevel = Array.from(levels.entries()).reduce((acc, [stageId, level]) => {
-        if (!acc[level]) acc[level] = [];
-        acc[level].push(stageId);
-        return acc;
-    }, []);
-
-    // Распределяем координаты
-    const stageWidth = 250; // Ширина этапа + отступ
-    const levelHeight = 150; // Высота уровня
-    stagesByLevel.forEach((stageIds, level) => {
-        const count = stageIds.length;
-        const totalWidth = count * stageWidth;
-        const startX = 1500 - totalWidth / 2; // Центрируем этапы (половина ширины доски - половина этапов)
-        stageIds.forEach((stageId, index) => {
-            const stage = state.scenarios.find(s => s.id === stageId);
-            stage.x = startX + index * stageWidth;
-            stage.y = 100 + level * levelHeight;
-        });
-    });
-
-    localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-    renderDiagram();
-}
-
-// Отрисовка схемы
-function renderDiagram() {
-    diagram.innerHTML = "";
-    state.activePath = []; // Сбрасываем путь
-
-    // Рисуем этапы
-    state.scenarios.forEach((stage, index) => {
-        const stageCard = document.createElement("div");
-        stageCard.className = "stage-card";
-        stageCard.style.left = `${stage.x}px`;
-        stageCard.style.top = `${stage.y}px`;
-        if (state.selectedStage === stage.id) {
-            stageCard.classList.add("selected");
-        }
-        if (state.activePath.includes(stage.id)) {
-            stageCard.classList.add("active-path");
-        }
-        stageCard.innerHTML = `
-            <h3>${stage.id}</h3>
-            <p>${stage.text}</p>
-        `;
-        stageCard.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (!state.isDragging) {
-                openEditModal(index);
-            }
-        });
-        diagram.appendChild(stageCard);
-
-        // Настройка перетаскивания
-        interact(stageCard).draggable({
-            onstart: () => {
-                state.isDragging = true;
-            },
-            onmove: (event) => {
-                const target = event.target;
-                const x = (parseFloat(target.style.left) || stage.x) + event.dx;
-                const y = (parseFloat(target.style.top) || stage.y) + event.dy;
-                target.style.left = `${x}px`;
-                target.style.top = `${y}px`;
-                stage.x = x;
-                stage.y = y;
-                renderArrows();
-            },
-            onend: () => {
-                localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-                setTimeout(() => {
-                    state.isDragging = false;
-                }, 100);
-            }
-        });
-
-        // Рисуем варианты ответов
-        const optionsDiv = document.createElement("div");
-        optionsDiv.className = "stage-options";
-        optionsDiv.style.left = `${stage.x}px`;
-        optionsDiv.style.top = `${stage.y + 50}px`; // Ниже этапа (высота этапа ~50px)
-        stage.options.forEach((option, optIndex) => {
-            const optionBtn = document.createElement("div");
-            optionBtn.className = "option-btn";
-            if (state.activePath.includes(option.next)) {
-                optionBtn.classList.add("active-path");
-            }
-            optionBtn.textContent = option.text;
-            optionBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                state.activePath = getPathTo(stage.id, option.next);
-                renderDiagram();
-            });
-            optionsDiv.appendChild(optionBtn);
-        });
-        diagram.appendChild(optionsDiv);
-    });
-
-    renderArrows();
-}
-
-// Рисование стрелок
-function renderArrows() {
-    // Удаляем старые стрелки
-    const existingArrows = diagram.querySelectorAll(".arrow");
-    existingArrows.forEach(arrow => arrow.remove());
-
-    // Рисуем новые стрелки
-    state.scenarios.forEach(stage => {
-        const optionsDiv = Array.from(diagram.querySelectorAll(".stage-options")).find(div =>
-            parseFloat(div.style.left) === stage.x && parseFloat(div.style.top) === stage.y + 50
-        );
-        if (!optionsDiv) return;
-
-        const optionButtons = optionsDiv.querySelectorAll(".option-btn");
-        stage.options.forEach((option, optIndex) => {
-            const nextStage = state.scenarios.find(s => s.id === option.next);
-            if (nextStage) {
-                const optionBtn = optionButtons[optIndex];
-                const optionRect = optionBtn.getBoundingClientRect();
-                const diagramRect = diagram.getBoundingClientRect();
-
-                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svg.className = "arrow";
-                svg.style.position = "absolute";
-                svg.style.zIndex = "-1";
-
-                const startX = stage.x + 200 / 2; // Центр этапа (ширина 200px)
-                const startY = stage.y + 50 + (optIndex + 1) * 30; // Низ варианта (высота варианта ~30px)
-                const endX = nextStage.x + 200 / 2;
-                const endY = nextStage.y;
-
-                // Устанавливаем размеры SVG
-                const minX = Math.min(startX, endX);
-                const minY = Math.min(startY, endY);
-                const maxX = Math.max(startX, endX);
-                const maxY = Math.max(startY, endY);
-                svg.style.left = `${minX}px`;
-                svg.style.top = `${minY}px`;
-                svg.style.width = `${maxX - minX}px`;
-                svg.style.height = `${maxY - minY}px`;
-
-                // Рисуем линию
-                const strokeColor = state.activePath.includes(nextStage.id) ? "#28a745" : "#4A90E2";
-                svg.innerHTML = `
-                    <line x1="${startX - minX}" y1="${startY - minY}" x2="${endX - minX}" y2="${endY - minY}" stroke="${strokeColor}" stroke-width="2"/>
-                    <text x="${(startX + endX) / 2 - minX}" y="${(startY + endY) / 2 - minY}" fill="#555" font-size="12" text-anchor="middle">${option.text}</text>
-                `;
-                diagram.appendChild(svg);
-            }
-        });
-    });
-}
-
-// Получение пути от начального этапа до целевого
-function getPathTo(fromId, toId) {
-    const path = [fromId];
-    function findPath(currentId) {
-        if (currentId === toId) return true;
-        const stage = state.scenarios.find(s => s.id === currentId);
-        if (!stage) return false;
-        for (const option of stage.options) {
-            if (option.next && findPath(option.next)) {
-                path.push(option.next);
-                return true;
-            }
-        }
-        return false;
-    }
-    findPath(fromId);
-    return path;
-}
-
 // Редактирование JSON
 editJsonBtn.addEventListener("click", () => {
     jsonEditor.value = JSON.stringify(state.scenarios, null, 2);
@@ -310,9 +132,15 @@ applyJsonBtn.addEventListener("click", () => {
     try {
         state.scenarios = JSON.parse(jsonEditor.value);
         cleanScenarios();
-        autoAlign();
+        // Присваиваем ID, если они отсутствуют
+        state.scenarios.forEach((stage, index) => {
+            if (!stage.id) {
+                stage.id = String(index + 1);
+            }
+        });
         localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-        renderDiagram();
+        DiagramEditor.autoAlign(state);
+        DiagramEditor.renderDiagram(state);
         editJsonModal.classList.remove("active");
     } catch (error) {
         alert("Ошибка в JSON: " + error.message);
@@ -323,27 +151,29 @@ cancelJsonBtn.addEventListener("click", () => {
     editJsonModal.classList.remove("active");
 });
 
-// Автовиравнивание по кнопке
+// Автовиравнивание
 autoAlignBtn.addEventListener("click", () => {
-    autoAlign();
+    DiagramEditor.autoAlign(state);
+});
+
+// Переключение стрелок
+toggleArrowsBtn.addEventListener("click", () => {
+    DiagramEditor.toggleArrows();
+    DiagramEditor.renderDiagram(state);
 });
 
 // Добавление этапа
 addStageBtn.addEventListener("click", () => {
-    const newId = `stage_${state.scenarios.length}`;
-    // Начальные координаты (будут переопределены при автовиравнивании)
-    const newStage = {
+    const newId = String(state.scenarios.length + 1);
+    state.scenarios.push({
         id: newId,
         text: "Новый этап",
-        options: [],
-        x: 1500,
-        y: 100
-    };
-    state.scenarios.push(newStage);
+        options: []
+    });
     cleanScenarios();
-    autoAlign();
     localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-    renderDiagram();
+    DiagramEditor.autoAlign(state);
+    DiagramEditor.renderDiagram(state);
 });
 
 // Сохранение JSON
@@ -370,9 +200,14 @@ jsonFileInput.addEventListener("change", (event) => {
             try {
                 state.scenarios = JSON.parse(e.target.result);
                 cleanScenarios();
-                autoAlign();
+                state.scenarios.forEach((stage, index) => {
+                    if (!stage.id) {
+                        stage.id = String(index + 1);
+                    }
+                });
                 localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
-                renderDiagram();
+                DiagramEditor.autoAlign(state);
+                DiagramEditor.renderDiagram(state);
             } catch (error) {
                 alert("Ошибка загрузки JSON: " + error.message);
             }
@@ -408,7 +243,7 @@ function openEditModal(index) {
         editStageOptions.appendChild(optionRow);
     });
     editStageModal.classList.add("active");
-    renderDiagram();
+    DiagramEditor.renderDiagram(state);
 }
 
 addOptionBtn.addEventListener("click", () => {
@@ -423,27 +258,25 @@ addOptionBtn.addEventListener("click", () => {
 
 deleteStageBtn.addEventListener("click", () => {
     const stageIndex = state.scenarios.findIndex(s => s.id === state.selectedStage);
-    const deletedId = state.scenarios[stageIndex].id;
     state.scenarios.splice(stageIndex, 1);
     cleanScenarios();
-    autoAlign();
     localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
     state.selectedStage = null;
     editStageModal.classList.remove("active");
-    renderDiagram();
+    DiagramEditor.autoAlign(state);
+    DiagramEditor.renderDiagram(state);
 });
 
 saveStageBtn.addEventListener("click", () => {
     const stageIndex = state.scenarios.findIndex(s => s.id === state.selectedStage);
     const stage = state.scenarios[stageIndex];
     const oldId = stage.id;
-    stage.id = editStageId.value;
+    stage.id = editStageId.value || String(stageIndex + 1);
     stage.text = editStageText.value;
     stage.options = Array.from(editStageOptions.children).map(row => ({
         text: row.querySelector("input").value,
         next: row.querySelector("select").value
     }));
-    // Обновляем связи, если ID изменился
     if (oldId !== stage.id) {
         state.scenarios.forEach(s => {
             s.options = s.options.map(opt => ({
@@ -453,17 +286,17 @@ saveStageBtn.addEventListener("click", () => {
         });
     }
     cleanScenarios();
-    autoAlign();
     localStorage.setItem("scenarios", JSON.stringify(state.scenarios));
     state.selectedStage = null;
     editStageModal.classList.remove("active");
-    renderDiagram();
+    DiagramEditor.autoAlign(state);
+    DiagramEditor.renderDiagram(state);
 });
 
 cancelStageBtn.addEventListener("click", () => {
     state.selectedStage = null;
     editStageModal.classList.remove("active");
-    renderDiagram();
+    DiagramEditor.renderDiagram(state);
 });
 
 init();
