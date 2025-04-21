@@ -53,6 +53,12 @@
     </div>
 
     <div class="container">
+        <!-- Панель инструментов -->
+        <div class="toolbar">
+            <button id="toggle-arrows-btn" class="toolbar-btn" title="Показать/Скрыть стрелки">
+                <span class="material-icons">arrow_forward</span>
+            </button>
+        </div>
         <div class="editor-panel">
             <div class="header">
                 <h1>Редактор сценариев</h1>
@@ -84,7 +90,9 @@
             <div class="editor-content">
                 <div class="scenario-builder">
                     <h2>Схема сценария</h2>
-                    <div id="diagram" class="diagram-container"></div>
+                    <div id="diagram-viewport" class="diagram-viewport">
+                        <div id="diagram" class="diagram-container"></div>
+                    </div>
                 </div>
                 <div class="ai-panel">
                     <h2>Помощник ИИ</h2>
@@ -94,6 +102,7 @@
         </div>
     </div>
 
+    <script src="diagramEditor.js"></script>
     <script src="editor.js"></script>
 </body>
 </html>
