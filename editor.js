@@ -52,8 +52,7 @@ function toggleButtons(enable) {
         toggleArrowsBtn,
         selectModeBtn,
         dragModeBtn,
-        editModeBtn,
-        changeFioBtn // Добавляем changeFioBtn в список, чтобы управлять её состоянием
+        editModeBtn
     ];
 
     buttons.forEach(button => {
