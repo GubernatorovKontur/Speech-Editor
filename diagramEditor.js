@@ -1,5 +1,11 @@
-// Модуль для управления полем редактора
 const DiagramEditor = (function () {
+    // Константы
+    const MIN_SCALE = 0.3;
+    const MAX_SCALE = 2;
+    const STAGE_WIDTH = 200;
+    const MIN_DISTANCE = 50;
+
+    // Переменные состояния
     let diagramContainer = null;
     let stagePositions = new Map();
     let camera = { x: 0, y: 0, scale: 1 };
@@ -9,57 +15,73 @@ const DiagramEditor = (function () {
     let collapsedStages = new Set();
     let mode = "edit";
     let isDraggingStage = false;
-    let stateRef = null; // Ссылка на state для использования в функциях
+    let stateRef = null;
 
+    // Инициализация
     function init(containerId, state) {
         diagramContainer = document.getElementById(containerId);
-        stateRef = state; // Сохраняем ссылку на state
+        if (!diagramContainer) {
+            throw new Error("Diagram container not found");
+        }
+        stateRef = state;
+
         const viewport = document.getElementById("diagram-viewport");
+        if (!viewport) {
+            throw new Error("Viewport not found");
+        }
 
-        viewport.addEventListener("wheel", (e) => {
+        bindViewportEvents(viewport);
+    }
+
+    // Привязка событий для viewport
+    function bindViewportEvents(viewport) {
+        viewport.addEventListener("wheel", handleWheelEvent);
+        viewport.addEventListener("mousedown", handleMouseDown);
+        viewport.addEventListener("mousemove", handleMouseMove);
+        viewport.addEventListener("mouseup", resetCameraDragging);
+        viewport.addEventListener("mouseleave", resetCameraDragging);
+    }
+
+    function handleWheelEvent(e) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        camera.scale = Math.max(MIN_SCALE, Math.min(camera.scale * delta, MAX_SCALE));
+        updateTransform();
+    }
+
+    function handleMouseDown(e) {
+        if (e.button === 0 && !e.target.closest(".stage-card")) {
+            isDraggingCamera = true;
+            startDrag.x = e.clientX;
+            startDrag.y = e.clientY;
+        }
+    }
+
+    function handleMouseMove(e) {
+        if (isDraggingCamera) {
             e.preventDefault();
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            camera.scale *= delta;
-            camera.scale = Math.max(0.3, Math.min(camera.scale, 2));
+            const dx = (e.clientX - startDrag.x) / camera.scale;
+            const dy = (e.clientY - startDrag.y) / camera.scale;
+            camera.x += dx;
+            camera.y += dy;
+            startDrag.x = e.clientX;
+            startDrag.y = e.clientY;
             updateTransform();
-        });
+        }
+    }
 
-        viewport.addEventListener("mousedown", (e) => {
-            if (e.button === 0 && !e.target.closest(".stage-card")) {
-                isDraggingCamera = true;
-                startDrag.x = e.clientX;
-                startDrag.y = e.clientY;
-            }
-        });
-
-        viewport.addEventListener("mousemove", (e) => {
-            if (isDraggingCamera) {
-                e.preventDefault();
-                const dx = (e.clientX - startDrag.x) / camera.scale;
-                const dy = (e.clientY - startDrag.y) / camera.scale;
-                camera.x += dx;
-                camera.y += dy;
-                startDrag.x = e.clientX;
-                startDrag.y = e.clientY;
-                updateTransform();
-            }
-        });
-
-        viewport.addEventListener("mouseup", () => {
-            isDraggingCamera = false;
-        });
-
-        viewport.addEventListener("mouseleave", () => {
-            isDraggingCamera = false;
-        });
+    function resetCameraDragging() {
+        isDraggingCamera = false;
     }
 
     function updateTransform() {
+        if (!diagramContainer) return;
         diagramContainer.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
     }
 
+    // Автовиравнивание
     function autoAlign(state) {
-        if (state.scenarios.length === 0) return;
+        if (!state.scenarios || state.scenarios.length === 0) return;
 
         const levels = new Map();
         const referencedStages = new Set(state.scenarios.flatMap(s => s.options.map(opt => opt.next).filter(Boolean)));
@@ -100,28 +122,28 @@ const DiagramEditor = (function () {
         renderDiagram(state);
     }
 
+    // Проверка коллизий
     function checkCollision(x, y, currentStageId) {
-        const stageWidth = 200;
         const stageHeight = 100 + 30 * (stateRef.scenarios.find(s => s.id === currentStageId)?.options.length || 0);
-        const minDistance = 50;
 
         for (const [stageId, pos] of stagePositions) {
             if (stageId === currentStageId) continue;
             const otherHeight = 100 + 30 * (stateRef.scenarios.find(s => s.id === stageId)?.options.length || 0);
             const dx = Math.abs(x - pos.x);
             const dy = Math.abs(y - pos.y);
-            if (dx < stageWidth + minDistance && dy < (stageHeight + otherHeight) / 2 + minDistance) {
-                if (dx < stageWidth + minDistance) {
-                    x = pos.x + (x < pos.x ? -(stageWidth + minDistance) : (stageWidth + minDistance));
+            if (dx < STAGE_WIDTH + MIN_DISTANCE && dy < (stageHeight + otherHeight) / 2 + MIN_DISTANCE) {
+                if (dx < STAGE_WIDTH + MIN_DISTANCE) {
+                    x = pos.x + (x < pos.x ? -(STAGE_WIDTH + MIN_DISTANCE) : (STAGE_WIDTH + MIN_DISTANCE));
                 }
-                if (dy < (stageHeight + otherHeight) / 2 + minDistance) {
-                    y = pos.y + (y < pos.y ? -((stageHeight + otherHeight) / 2 + minDistance) : ((stageHeight + otherHeight) / 2 + minDistance));
+                if (dy < (stageHeight + otherHeight) / 2 + MIN_DISTANCE) {
+                    y = pos.y + (y < pos.y ? -((stageHeight + otherHeight) / 2 + MIN_DISTANCE) : ((stageHeight + otherHeight) / 2 + MIN_DISTANCE));
                 }
             }
         }
         return { x, y };
     }
 
+    // Рендеринг схемы
     function renderDiagram(state) {
         if (!diagramContainer) {
             console.error("DiagramEditor: diagramContainer is not initialized");
@@ -135,110 +157,8 @@ const DiagramEditor = (function () {
             if (!stagePositions.has(stage.id)) {
                 stagePositions.set(stage.id, { x: 1500, y: 100 });
             }
-            const pos = stagePositions.get(stage.id);
-
-            const stageCard = document.createElement("div");
-            stageCard.className = "stage-card";
-            stageCard.style.left = `${pos.x}px`;
-            stageCard.style.top = `${pos.y}px`;
-            if (state.selectedStage === stage.id) {
-                stageCard.classList.add("selected");
-            }
-            if (state.activePath.includes(stage.id)) {
-                stageCard.classList.add("active-path");
-            }
-            const isCollapsed = collapsedStages.has(stage.id);
-            stageCard.innerHTML = `
-                <div class="stage-header">
-                    <h3>${stage.id}</h3>
-                    <button class="toggle-btn">
-                        <span class="material-icons">${isCollapsed ? "expand_more" : "expand_less"}</span>
-                    </button>
-                </div>
-                <p>${stage.text}</p>
-                <div class="stage-options" style="display: ${isCollapsed ? 'none' : 'block'};"></div>
-            `;
-            stageCard.addEventListener("click", (e) => {
-                e.stopPropagation();
-                console.log("Current mode:", mode);
-                if (mode === "edit" && !state.isDragging) {
-                    state.openEditModal(index);
-                } else if (mode === "select") {
-                    state.selectedStage = stage.id;
-                    renderDiagram(state);
-                }
-            });
+            const stageCard = createStageCard(stage, index, state);
             diagramContainer.appendChild(stageCard);
-
-            if (mode === "drag" || mode === "edit") {
-                interact(stageCard).draggable({
-                    onstart: () => {
-                        state.isDragging = true;
-                        isDraggingStage = true;
-                        hideArrows();
-                    },
-                    onmove: (event) => {
-                        const target = event.target;
-                        let x = (parseFloat(target.style.left) || pos.x) + event.dx / camera.scale;
-                        let y = (parseFloat(target.style.top) || pos.y) + event.dy / camera.scale;
-                        const adjustedPos = checkCollision(x, y, stage.id);
-                        x = adjustedPos.x;
-                        y = adjustedPos.y;
-                        target.style.left = `${x}px`;
-                        target.style.top = `${y}px`;
-                        stagePositions.set(stage.id, { x, y });
-                    },
-                    onend: () => {
-                        setTimeout(() => {
-                            state.isDragging = false;
-                            isDraggingStage = false;
-                            showArrows();
-                            renderArrows(state);
-                        }, 100);
-                    }
-                });
-            }
-
-            const toggleBtn = stageCard.querySelector(".toggle-btn");
-            toggleBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                if (collapsedStages.has(stage.id)) {
-                    collapsedStages.delete(stage.id);
-                } else {
-                    collapsedStages.add(stage.id);
-                }
-                autoAlign(state);
-            });
-
-            const optionsDiv = stageCard.querySelector(".stage-options");
-            stage.options.forEach((option, optIndex) => {
-                const optionBtn = document.createElement("div");
-                optionBtn.className = "option-btn";
-                if (state.activePath.includes(option.next)) {
-                    optionBtn.classList.add("active-path");
-                }
-                optionBtn.textContent = option.text;
-                optionBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    const path = getPathTo(stage.id, option.next, state.scenarios);
-                    if (path.length <= 1 && option.next) {
-                        alert(`Ошибка: Связь "${option.next}" не найдена. Проверьте корректность данных.`);
-                        state.activePath = [];
-                    } else {
-                        state.activePath = path;
-                        const nextStage = state.scenarios.find(s => s.id === option.next);
-                        if (nextStage) {
-                            const nextStageCard = Array.from(diagramContainer.querySelectorAll(".stage-card"))
-                                .find(card => card.querySelector("h3").textContent === nextStage.id);
-                            if (nextStageCard) {
-                                nextStageCard.classList.add("highlighted");
-                            }
-                        }
-                    }
-                    renderDiagram(state);
-                });
-                optionsDiv.appendChild(optionBtn);
-            });
         });
 
         if (!isDraggingStage) {
@@ -247,6 +167,120 @@ const DiagramEditor = (function () {
         updateTransform();
     }
 
+    // Создание карточки этапа
+    function createStageCard(stage, index, state) {
+        const pos = stagePositions.get(stage.id);
+        const stageCard = document.createElement("div");
+        stageCard.className = "stage-card";
+        stageCard.style.left = `${pos.x}px`;
+        stageCard.style.top = `${pos.y}px`;
+        stageCard.setAttribute("tabindex", "0");
+
+        if (state.selectedStage === stage.id) {
+            stageCard.classList.add("selected");
+        }
+        if (state.activePath.includes(stage.id)) {
+            stageCard.classList.add("active-path");
+        }
+
+        const isCollapsed = collapsedStages.has(stage.id);
+        stageCard.innerHTML = `
+            <div class="stage-header">
+                <h3>${stage.id}</h3>
+                <button class="toggle-btn" aria-label="${isCollapsed ? 'Развернуть' : 'Свернуть'}">
+                    <span class="material-icons">${isCollapsed ? "expand_more" : "expand_less"}</span>
+                </button>
+            </div>
+            <p>${stage.text}</p>
+            <div class="stage-options" style="display: ${isCollapsed ? 'none' : 'block'};"></div>
+        `;
+
+        stageCard.addEventListener("click", (e) => {
+            e.stopPropagation();
+            console.log("Current mode:", mode);
+            if (mode === "edit" && !state.isDragging) {
+                state.openEditModal(index);
+            } else if (mode === "select") {
+                state.selectedStage = stage.id;
+                renderDiagram(state);
+            }
+        });
+
+        if (mode === "drag" || mode === "edit") {
+            interact(stageCard).draggable({
+                onstart: () => {
+                    state.isDragging = true;
+                    isDraggingStage = true;
+                    hideArrows();
+                },
+                onmove: (event) => {
+                    const target = event.target;
+                    let x = (parseFloat(target.style.left) || pos.x) + event.dx / camera.scale;
+                    let y = (parseFloat(target.style.top) || pos.y) + event.dy / camera.scale;
+                    const adjustedPos = checkCollision(x, y, stage.id);
+                    x = adjustedPos.x;
+                    y = adjustedPos.y;
+                    target.style.left = `${x}px`;
+                    target.style.top = `${y}px`;
+                    stagePositions.set(stage.id, { x, y });
+                },
+                onend: () => {
+                    setTimeout(() => {
+                        state.isDragging = false;
+                        isDraggingStage = false;
+                        showArrows();
+                        renderArrows(state);
+                    }, 100);
+                }
+            });
+        }
+
+        const toggleBtn = stageCard.querySelector(".toggle-btn");
+        toggleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (collapsedStages.has(stage.id)) {
+                collapsedStages.delete(stage.id);
+            } else {
+                collapsedStages.add(stage.id);
+            }
+            autoAlign(state);
+        });
+
+        const optionsDiv = stageCard.querySelector(".stage-options");
+        stage.options.forEach((option, optIndex) => {
+            const optionBtn = document.createElement("div");
+            optionBtn.className = "option-btn";
+            optionBtn.setAttribute("tabindex", "0");
+            if (state.activePath.includes(option.next)) {
+                optionBtn.classList.add("active-path");
+            }
+            optionBtn.textContent = option.text;
+            optionBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const path = getPathTo(stage.id, option.next, state.scenarios);
+                if (path.length <= 1 && option.next) {
+                    alert(`Ошибка: Связь "${option.next}" не найдена. Проверьте корректность данных.`);
+                    state.activePath = [];
+                } else {
+                    state.activePath = path;
+                    const nextStage = state.scenarios.find(s => s.id === option.next);
+                    if (nextStage) {
+                        const nextStageCard = Array.from(diagramContainer.querySelectorAll(".stage-card"))
+                            .find(card => card.querySelector("h3").textContent === nextStage.id);
+                        if (nextStageCard) {
+                            nextStageCard.classList.add("highlighted");
+                        }
+                    }
+                }
+                renderDiagram(state);
+            });
+            optionsDiv.appendChild(optionBtn);
+        });
+
+        return stageCard;
+    }
+
+    // Управление видимостью стрелок
     function hideArrows() {
         const arrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         arrows.forEach(arrow => {
@@ -261,6 +295,7 @@ const DiagramEditor = (function () {
         });
     }
 
+    // Рендеринг стрелок
     function renderArrows(state) {
         const existingArrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         existingArrows.forEach(arrow => arrow.remove());
@@ -288,9 +323,9 @@ const DiagramEditor = (function () {
                     svg.style.position = "absolute";
                     svg.style.zIndex = "-1";
 
-                    const startX = pos.x + 200 / 2;
+                    const startX = pos.x + STAGE_WIDTH / 2;
                     const startY = pos.y + 50 + (optIndex + 1) * 30;
-                    const endX = nextPos.x + 200 / 2;
+                    const endX = nextPos.x + STAGE_WIDTH / 2;
                     const endY = nextPos.y;
 
                     const minX = Math.min(startX, endX);
@@ -327,6 +362,7 @@ const DiagramEditor = (function () {
         });
     }
 
+    // Поиск пути между этапами
     function getPathTo(fromId, toId, scenarios) {
         const path = [];
         if (!fromId || !scenarios.some(s => s.id === fromId)) return path;
@@ -352,10 +388,12 @@ const DiagramEditor = (function () {
         return path;
     }
 
+    // Переключение видимости стрелок
     function toggleArrows() {
         showArrows = !showArrows;
     }
 
+    // Установка режима
     function setMode(newMode) {
         console.log("Switching to mode:", newMode);
         mode = newMode;
