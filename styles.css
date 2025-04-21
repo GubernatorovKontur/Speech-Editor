@@ -1,4 +1,4 @@
-/* === Общие стили === */
+/* Общие стили */
 :root {
     --primary-color: #4A90E2;
     --primary-hover: #3a78c2;
@@ -28,7 +28,7 @@ body {
     height: 100vh;
 }
 
-/* === Панель инструментов === */
+/* Панель инструментов */
 .toolbar {
     width: 60px;
     background: #f5f7fa;
@@ -54,17 +54,13 @@ body {
     border-radius: 5px;
 }
 
-.toolbar-btn:focus {
-    outline: 2px solid var(--primary-color);
-}
-
 .toolbar-btn.active {
     background: var(--primary-color);
     color: var(--white-color);
     border-radius: 5px;
 }
 
-/* === Панель редактора === */
+/* Панель редактора */
 .editor-panel {
     flex: 1;
     background: var(--white-color);
@@ -125,10 +121,6 @@ h3 {
     background: var(--primary-hover);
 }
 
-.icon-btn:focus {
-    outline: 2px solid var(--primary-hover);
-}
-
 .icon-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
@@ -161,7 +153,7 @@ h3 {
     display: none;
 }
 
-/* === Сценарии и карточки === */
+/* Сценарии и карточки */
 .diagram-viewport {
     position: relative;
     width: 100%;
@@ -193,10 +185,6 @@ h3 {
 
 .stage-card:hover {
     border-color: var(--primary-color);
-}
-
-.stage-card:focus {
-    outline: 2px solid var(--primary-color);
 }
 
 .stage-card.selected {
@@ -259,16 +247,12 @@ h3 {
     background: #e8e8e8;
 }
 
-.option-btn:focus {
-    outline: 2px solid var(--primary-color);
-}
-
 .option-btn.active-path {
     border-color: #28a745;
     background: #e6f4ea;
 }
 
-/* === Стрелки === */
+/* Стрелки */
 .arrow {
     position: absolute;
 }
@@ -285,7 +269,7 @@ h3 {
     display: none;
 }
 
-/* === Модальные окна === */
+/* Модальные окна */
 .modal {
     display: none;
     position: fixed;
@@ -300,7 +284,7 @@ h3 {
 }
 
 .modal.active {
-    display: flex !important;
+    display: flex;
 }
 
 .modal-content {
@@ -366,7 +350,7 @@ h3 {
     font-size: 14px;
 }
 
-/* === Медиа-запросы для отзывчивости === */
+/* Медиа-запросы для отзывчивости */
 @media (max-width: 768px) {
     .diagram-viewport {
         height: calc(100vh - 100px);
