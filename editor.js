@@ -56,10 +56,17 @@ function toggleButtons(enable) {
     ];
 
     buttons.forEach(button => {
-        button.disabled = !enable;
+        if (button) {
+            button.disabled = !enable;
+        }
     });
 
-    document.querySelector(".editor-panel").style.opacity = enable ? "1" : "0.5";
+    const editorPanel = document.querySelector(".editor-panel");
+    if (editorPanel) {
+        editorPanel.style.opacity = enable ? "1" : "0.5";
+    }
+
+    console.log(`Buttons ${enable ? 'enabled' : 'disabled'}`);
 }
 
 function validateFio(fio) {
@@ -68,11 +75,13 @@ function validateFio(fio) {
 }
 
 function saveToLocalStorage(key, data) {
+    console.log(`Saving to localStorage: key=${key}, data=`, data);
     localStorage.setItem(key, JSON.stringify(data));
 }
 
 function loadFromLocalStorage(key) {
     const data = localStorage.getItem(key);
+    console.log(`Loading from localStorage: key=${key}, data=`, data);
     return data ? JSON.parse(data) : null;
 }
 
@@ -86,6 +95,7 @@ function init() {
     DiagramEditor.init("diagram", state);
 
     const savedFio = loadFromLocalStorage("userFio");
+    console.log("Saved FIO:", savedFio);
     if (savedFio) {
         state.user = savedFio;
         userFio.textContent = savedFio;
@@ -115,10 +125,12 @@ function init() {
 
 // Включение/отключение редактора
 function enableEditor() {
+    console.log("Enabling editor...");
     toggleButtons(true);
 }
 
 function disableEditor() {
+    console.log("Disabling editor...");
     toggleButtons(false);
 }
 
@@ -150,6 +162,7 @@ function bindEventListeners() {
 // Обработчики событий
 function handleFioSubmit() {
     const fio = fioInput.value.trim();
+    console.log("FIO entered:", fio);
     if (validateFio(fio)) {
         state.user = fio;
         saveToLocalStorage("userFio", fio);
@@ -162,8 +175,10 @@ function handleFioSubmit() {
 }
 
 function handleFioChange() {
+    console.log("Changing FIO...");
     localStorage.removeItem("userFio");
     state.user = null;
+    userFio.textContent = "";
     fioModal.classList.add("active");
     disableEditor();
 }
