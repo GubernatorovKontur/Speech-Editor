@@ -1,4 +1,6 @@
 const DiagramEditor = (function () {
+    console.log("Loading DiagramEditor..."); // Отладочный лог
+
     const MIN_SCALE = 0.3;
     const MAX_SCALE = 2;
     const STAGE_WIDTH = 200;
@@ -16,6 +18,7 @@ const DiagramEditor = (function () {
     let stateRef = null;
 
     function init(containerId, state) {
+        console.log("DiagramEditor.init called with containerId:", containerId);
         diagramContainer = document.getElementById(containerId);
         if (!diagramContainer) {
             throw new Error("Diagram container not found");
@@ -383,6 +386,7 @@ const DiagramEditor = (function () {
         renderDiagram(stateRef);
     }
 
+    console.log("DiagramEditor loaded successfully");
     return {
         init,
         autoAlign,
