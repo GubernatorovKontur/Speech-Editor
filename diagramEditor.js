@@ -1,11 +1,9 @@
 const DiagramEditor = (function () {
-    // Константы
     const MIN_SCALE = 0.3;
     const MAX_SCALE = 2;
     const STAGE_WIDTH = 200;
     const MIN_DISTANCE = 50;
 
-    // Переменные состояния
     let diagramContainer = null;
     let stagePositions = new Map();
     let camera = { x: 0, y: 0, scale: 1 };
@@ -17,7 +15,6 @@ const DiagramEditor = (function () {
     let isDraggingStage = false;
     let stateRef = null;
 
-    // Инициализация
     function init(containerId, state) {
         diagramContainer = document.getElementById(containerId);
         if (!diagramContainer) {
@@ -33,7 +30,6 @@ const DiagramEditor = (function () {
         bindViewportEvents(viewport);
     }
 
-    // Привязка событий для viewport
     function bindViewportEvents(viewport) {
         viewport.addEventListener("wheel", handleWheelEvent);
         viewport.addEventListener("mousedown", handleMouseDown);
@@ -79,7 +75,6 @@ const DiagramEditor = (function () {
         diagramContainer.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.scale})`;
     }
 
-    // Автовиравнивание
     function autoAlign(state) {
         if (!state.scenarios || state.scenarios.length === 0) return;
 
@@ -122,7 +117,6 @@ const DiagramEditor = (function () {
         renderDiagram(state);
     }
 
-    // Проверка коллизий
     function checkCollision(x, y, currentStageId) {
         const stageHeight = 100 + 30 * (stateRef.scenarios.find(s => s.id === currentStageId)?.options.length || 0);
 
@@ -143,7 +137,6 @@ const DiagramEditor = (function () {
         return { x, y };
     }
 
-    // Рендеринг схемы
     function renderDiagram(state) {
         if (!diagramContainer) {
             console.error("DiagramEditor: diagramContainer is not initialized");
@@ -167,14 +160,12 @@ const DiagramEditor = (function () {
         updateTransform();
     }
 
-    // Создание карточки этапа
     function createStageCard(stage, index, state) {
         const pos = stagePositions.get(stage.id);
         const stageCard = document.createElement("div");
         stageCard.className = "stage-card";
         stageCard.style.left = `${pos.x}px`;
         stageCard.style.top = `${pos.y}px`;
-        stageCard.setAttribute("tabindex", "0");
 
         if (state.selectedStage === stage.id) {
             stageCard.classList.add("selected");
@@ -187,7 +178,7 @@ const DiagramEditor = (function () {
         stageCard.innerHTML = `
             <div class="stage-header">
                 <h3>${stage.id}</h3>
-                <button class="toggle-btn" aria-label="${isCollapsed ? 'Развернуть' : 'Свернуть'}">
+                <button class="toggle-btn">
                     <span class="material-icons">${isCollapsed ? "expand_more" : "expand_less"}</span>
                 </button>
             </div>
@@ -197,7 +188,6 @@ const DiagramEditor = (function () {
 
         stageCard.addEventListener("click", (e) => {
             e.stopPropagation();
-            console.log("Current mode:", mode);
             if (mode === "edit" && !state.isDragging) {
                 state.openEditModal(index);
             } else if (mode === "select") {
@@ -250,7 +240,6 @@ const DiagramEditor = (function () {
         stage.options.forEach((option, optIndex) => {
             const optionBtn = document.createElement("div");
             optionBtn.className = "option-btn";
-            optionBtn.setAttribute("tabindex", "0");
             if (state.activePath.includes(option.next)) {
                 optionBtn.classList.add("active-path");
             }
@@ -280,7 +269,6 @@ const DiagramEditor = (function () {
         return stageCard;
     }
 
-    // Управление видимостью стрелок
     function hideArrows() {
         const arrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         arrows.forEach(arrow => {
@@ -295,7 +283,6 @@ const DiagramEditor = (function () {
         });
     }
 
-    // Рендеринг стрелок
     function renderArrows(state) {
         const existingArrows = diagramContainer.querySelectorAll(".arrow, .arrow-tooltip");
         existingArrows.forEach(arrow => arrow.remove());
@@ -362,7 +349,6 @@ const DiagramEditor = (function () {
         });
     }
 
-    // Поиск пути между этапами
     function getPathTo(fromId, toId, scenarios) {
         const path = [];
         if (!fromId || !scenarios.some(s => s.id === fromId)) return path;
@@ -388,14 +374,11 @@ const DiagramEditor = (function () {
         return path;
     }
 
-    // Переключение видимости стрелок
     function toggleArrows() {
         showArrows = !showArrows;
     }
 
-    // Установка режима
     function setMode(newMode) {
-        console.log("Switching to mode:", newMode);
         mode = newMode;
         renderDiagram(stateRef);
     }
