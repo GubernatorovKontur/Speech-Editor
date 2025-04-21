@@ -58,52 +58,26 @@ function toggleButtons(enable) {
     buttons.forEach(button => {
         if (button) {
             button.disabled = !enable;
-            console.log(`Button ${button.id} disabled: ${button.disabled}`);
-        } else {
-            console.error("Button not found:", button);
         }
     });
 
     const editorPanel = document.querySelector(".editor-panel");
     if (editorPanel) {
         editorPanel.style.opacity = enable ? "1" : "0.5";
-    } else {
-        console.error("Editor panel not found");
     }
-
-    console.log(`Buttons ${enable ? 'enabled' : 'disabled'}`);
-}
-
-function validateFio(fio) {
-    const fioRegex = /^[А-Яа-яЁё\s]+$/;
-    return fio && fioRegex.test(fio.trim());
 }
 
 function saveToLocalStorage(key, data) {
-    console.log(`Saving to localStorage: key=${key}, data=`, data);
     localStorage.setItem(key, JSON.stringify(data));
 }
 
 function loadFromLocalStorage(key) {
     const data = localStorage.getItem(key);
-    console.log(`Loading from localStorage: key=${key}, data=`, data);
     return data ? JSON.parse(data) : null;
 }
 
 // Инициализация приложения
 function init() {
-    console.log("Initializing application...");
-
-    // Проверка наличия элементов DOM
-    if (!fioModal) {
-        console.error("FIO modal not found");
-        return;
-    }
-    if (!userFio) {
-        console.error("User FIO element not found");
-        return;
-    }
-
     if (typeof DiagramEditor === "undefined") {
         console.error("DiagramEditor is not defined");
         return;
@@ -112,16 +86,11 @@ function init() {
     DiagramEditor.init("diagram", state);
 
     const savedFio = loadFromLocalStorage("userFio");
-    console.log("Saved FIO:", savedFio);
-
-    // Более строгая проверка на валидность ФИО
-    if (savedFio && validateFio(savedFio)) {
+    if (savedFio) {
         state.user = savedFio;
         userFio.textContent = savedFio;
         enableEditor();
-        console.log("FIO loaded, editor enabled");
     } else {
-        console.log("No valid FIO found, showing modal");
         fioModal.classList.add("active");
         disableEditor();
     }
@@ -146,27 +115,16 @@ function init() {
 
 // Включение/отключение редактора
 function enableEditor() {
-    console.log("Enabling editor...");
     toggleButtons(true);
 }
 
 function disableEditor() {
-    console.log("Disabling editor...");
     toggleButtons(false);
 }
 
 // Привязка обработчиков событий
 function bindEventListeners() {
-    if (!fioSubmit) {
-        console.error("FIO submit button not found");
-        return;
-    }
     fioSubmit.addEventListener("click", handleFioSubmit);
-
-    if (!changeFioBtn) {
-        console.error("Change FIO button not found");
-        return;
-    }
     changeFioBtn.addEventListener("click", handleFioChange);
 
     editJsonBtn.addEventListener("click", openJsonEditor);
@@ -192,20 +150,18 @@ function bindEventListeners() {
 // Обработчики событий
 function handleFioSubmit() {
     const fio = fioInput.value.trim();
-    console.log("FIO entered:", fio);
-    if (validateFio(fio)) {
+    if (fio) {
         state.user = fio;
         saveToLocalStorage("userFio", fio);
         userFio.textContent = fio;
         fioModal.classList.remove("active");
         enableEditor();
     } else {
-        alert("Пожалуйста, введите корректное ФИО (только буквы и пробелы).");
+        alert("Пожалуйста, введите ФИО.");
     }
 }
 
 function handleFioChange() {
-    console.log("Changing FIO...");
     localStorage.removeItem("userFio");
     state.user = null;
     userFio.textContent = "";
