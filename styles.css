@@ -8,7 +8,7 @@
 body {
     background: #ffffff;
     color: #333;
-    overflow: hidden; /* Убираем скроллбары на уровне body */
+    overflow: hidden;
 }
 
 .container {
@@ -33,11 +33,17 @@ body {
     padding: 10px;
     cursor: pointer;
     color: #4A90E2;
-    transition: background 0.3s;
+    transition: background 0.3s, color 0.3s;
 }
 
 .toolbar-btn:hover {
     background: #e8e8e8;
+    border-radius: 5px;
+}
+
+.toolbar-btn.active {
+    background: #4A90E2;
+    color: #fff;
     border-radius: 5px;
 }
 
@@ -116,7 +122,7 @@ h1 {
 }
 
 .ai-panel {
-    display: none; /* Скрываем панель ИИ, пока она не используется */
+    display: none;
 }
 
 h2 {
@@ -136,8 +142,8 @@ h3 {
 .diagram-viewport {
     position: relative;
     width: 100%;
-    height: calc(100vh - 150px); /* Высота с учётом заголовков и кнопок */
-    overflow: hidden; /* Убираем скроллбары */
+    height: calc(100vh - 150px);
+    overflow: hidden;
     border: 1px solid #ddd;
     border-radius: 3px;
     background: #fafafa;
