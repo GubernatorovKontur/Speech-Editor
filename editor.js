@@ -32,6 +32,9 @@ const deleteStageBtn = document.getElementById("delete-stage-btn");
 const saveStageBtn = document.getElementById("save-stage-btn");
 const cancelStageBtn = document.getElementById("cancel-stage-btn");
 const toggleArrowsBtn = document.getElementById("toggle-arrows-btn");
+const selectModeBtn = document.getElementById("select-mode-btn");
+const dragModeBtn = document.getElementById("drag-mode-btn");
+const editModeBtn = document.getElementById("edit-mode-btn");
 
 // Привязываем метод открытия модального окна к состоянию
 state.openEditModal = function(index) {
@@ -40,10 +43,8 @@ state.openEditModal = function(index) {
 
 // Инициализация
 function init() {
-    // Инициализация редактора
     DiagramEditor.init("diagram");
 
-    // Проверяем ФИО
     const savedFio = localStorage.getItem("userFio");
     if (savedFio) {
         state.user = savedFio;
@@ -54,14 +55,12 @@ function init() {
         disableEditor();
     }
 
-    // Загружаем сохранённые сценарии
     const savedScenarios = localStorage.getItem("scenarios");
     if (savedScenarios) {
         state.scenarios = JSON.parse(savedScenarios);
         cleanScenarios();
     }
 
-    // Присваиваем ID по умолчанию (цифры)
     state.scenarios.forEach((stage, index) => {
         if (!stage.id || stage.id.startsWith("stage_")) {
             stage.id = String(index + 1);
@@ -70,9 +69,29 @@ function init() {
 
     DiagramEditor.autoAlign(state);
     DiagramEditor.renderDiagram(state);
+
+    // Обработчики режимов
+    selectModeBtn.addEventListener("click", () => {
+        setMode("select");
+    });
+    dragModeBtn.addEventListener("click", () => {
+        setMode("drag");
+    });
+    editModeBtn.addEventListener("click", () => {
+        setMode("edit");
+    });
 }
 
-// Активация/деактивация редактора
+function setMode(mode) {
+    DiagramEditor.setMode(mode);
+    selectModeBtn.classList.remove("active");
+    dragModeBtn.classList.remove("active");
+    editModeBtn.classList.remove("active");
+    if (mode === "select") selectModeBtn.classList.add("active");
+    else if (mode === "drag") dragModeBtn.classList.add("active");
+    else if (mode === "edit") editModeBtn.classList.add("active");
+}
+
 function enableEditor() {
     addStageBtn.disabled = false;
     autoAlignBtn.disabled = false;
@@ -80,6 +99,9 @@ function enableEditor() {
     saveJsonBtn.disabled = false;
     loadJsonBtn.disabled = false;
     toggleArrowsBtn.disabled = false;
+    selectModeBtn.disabled = false;
+    dragModeBtn.disabled = false;
+    editModeBtn.disabled = false;
     document.querySelector(".editor-panel").style.opacity = "1";
 }
 
@@ -90,10 +112,12 @@ function disableEditor() {
     saveJsonBtn.disabled = true;
     loadJsonBtn.disabled = true;
     toggleArrowsBtn.disabled = true;
+    selectModeBtn.disabled = true;
+    dragModeBtn.disabled = true;
+    editModeBtn.disabled = true;
     document.querySelector(".editor-panel").style.opacity = "0.5";
 }
 
-// Обработчик ввода ФИО
 fioSubmit.addEventListener("click", () => {
     const fio = fioInput.value.trim();
     if (fio) {
@@ -114,7 +138,6 @@ changeFioBtn.addEventListener("click", () => {
     disableEditor();
 });
 
-// Очистка сценариев (удаление некорректных связей)
 function cleanScenarios() {
     const stageIds = state.scenarios.map(s => s.id);
     state.scenarios.forEach(stage => {
@@ -122,7 +145,6 @@ function cleanScenarios() {
     });
 }
 
-// Редактирование JSON
 editJsonBtn.addEventListener("click", () => {
     jsonEditor.value = JSON.stringify(state.scenarios, null, 2);
     editJsonModal.classList.add("active");
@@ -132,7 +154,6 @@ applyJsonBtn.addEventListener("click", () => {
     try {
         state.scenarios = JSON.parse(jsonEditor.value);
         cleanScenarios();
-        // Присваиваем ID, если они отсутствуют
         state.scenarios.forEach((stage, index) => {
             if (!stage.id) {
                 stage.id = String(index + 1);
@@ -151,18 +172,15 @@ cancelJsonBtn.addEventListener("click", () => {
     editJsonModal.classList.remove("active");
 });
 
-// Автовиравнивание
 autoAlignBtn.addEventListener("click", () => {
     DiagramEditor.autoAlign(state);
 });
 
-// Переключение стрелок
 toggleArrowsBtn.addEventListener("click", () => {
     DiagramEditor.toggleArrows();
     DiagramEditor.renderDiagram(state);
 });
 
-// Добавление этапа
 addStageBtn.addEventListener("click", () => {
     const newId = String(state.scenarios.length + 1);
     state.scenarios.push({
@@ -176,7 +194,6 @@ addStageBtn.addEventListener("click", () => {
     DiagramEditor.renderDiagram(state);
 });
 
-// Сохранение JSON
 saveJsonBtn.addEventListener("click", () => {
     const blob = new Blob([JSON.stringify(state.scenarios, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -187,7 +204,6 @@ saveJsonBtn.addEventListener("click", () => {
     URL.revokeObjectURL(url);
 });
 
-// Загрузка JSON
 loadJsonBtn.addEventListener("click", () => {
     jsonFileInput.click();
 });
@@ -216,7 +232,6 @@ jsonFileInput.addEventListener("change", (event) => {
     }
 });
 
-// Редактирование этапа
 function openEditModal(index) {
     const stage = state.scenarios[index];
     state.selectedStage = stage.id;
