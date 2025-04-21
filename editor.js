@@ -90,6 +90,7 @@ function setMode(mode) {
     if (mode === "select") selectModeBtn.classList.add("active");
     else if (mode === "drag") dragModeBtn.classList.add("active");
     else if (mode === "edit") editModeBtn.classList.add("active");
+    DiagramEditor.renderDiagram(state);
 }
 
 function enableEditor() {
